@@ -275,6 +275,42 @@
   .camera-idle svg { width: 36px; height: 36px; opacity: 0.4; margin-bottom: 0.25rem; }
   .camera-idle p { font-size: 0.875rem; max-width: 200px; line-height: 1.5; }
 
+  /* Pagination */
+
+  .pagination-flex {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    margin: 2rem 0;
+    padding: 1rem;
+    font-family: var(--font-ui);
+    font-size: 0.9rem;
+    color: var(--text-2);
+  }
+
+  .btn-page {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .btn-page:hover:not(:disabled) {
+    background: var(--accent-light);
+    border-color: var(--accent);
+    color: var(--accent-dark);
+  }
+
+  .btn-page:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
   /* ── Result card ── */
   #result-section { display: none; }
   #result-section.visible { display: block; }
@@ -646,7 +682,9 @@
     collection: JSON.parse(localStorage.getItem('bookstack_collection') || '[]'),
     locations:  JSON.parse(localStorage.getItem('bookstack_locations')  || 'null') || [...DEFAULT_LOCATIONS],
     subcategories: JSON.parse(localStorage.getItem('bookstack_subcategories') || '{}'), 
-    currentBook: null
+    currentBook: null,
+    currentPage: 1,
+    booksPerPage: 10
   };
 
   /* ── Persist ── */
@@ -980,29 +1018,38 @@
   }
 
   /* ── Collection render ── */
-  function renderCollection() {
-    const list  = document.getElementById('collection-list');
-    const empty = document.getElementById('collection-empty');
-    document.getElementById('collection-count').textContent = state.collection.length;
-
+    function renderCollection() {
+    const list = document.getElementById('collection-list');
+    const empty = document.getElementById('empty-state');
+    
     if (state.collection.length === 0) {
       list.innerHTML = '';
-      list.appendChild(empty);
+      empty.style.display = 'block';
+      // Rimuoviamo i controlli se la collezione è vuota
+      const oldControls = document.getElementById('pagination-controls');
+      if (oldControls) oldControls.innerHTML = '';
       return;
     }
+    
+    empty.style.display = 'none';
 
-    const statusClass = {
-      'Letto':       'status-letto',
-      'In lettura':  'status-in-lettura',
-      'Da leggere':  'status-da-leggere',
-      'Sospeso':     'status-sospeso'
-    };
+    // Calcolo indici per paginazione
+    const totalPages = Math.ceil(state.collection.length / state.booksPerPage);
+    
+    // Sicurezza: se elimini libri e la pagina corrente diventa inesistente, torna all'ultima valida
+    if (state.currentPage > totalPages) state.currentPage = totalPages || 1;
 
-    const deleteSVG = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 4l12 12M16 4L4 16"/></svg>`;
+    const startIndex = (state.currentPage - 1) * state.booksPerPage;
+    const endIndex = startIndex + state.booksPerPage;
+    const paginatedBooks = state.collection.slice(startIndex, endIndex);
 
-    list.innerHTML = state.collection.map(book => {
+    // Mappatura dei libri con supporto a Copertine e Categorie
+    list.innerHTML = paginatedBooks.map(book => {
+      const statusClass = { 'letto': 'status-read', 'in-corso': 'status-reading', 'da-leggere': 'status-wish' };
+      
+      // Mostra copertina se esiste, altrimenti il dorso colorato
       const coverHtml = book.cover 
-        ? `<img src="${book.cover}" class="book-cover-img" alt="Copertina">`
+        ? `<img src="${book.cover}" class="book-cover-img" alt="Copertina" onerror="this.style.display='none'">`
         : `<div class="book-spine">${escHtml(book.title)}</div>`;
 
       return `
@@ -1014,13 +1061,55 @@
             <div class="book-item-footer">
               <span class="status-pill ${statusClass[book.status] || ''}">${escHtml(book.status)}</span>
               <span class="tag">${escHtml(book.category)}</span>
+              ${book.subcategory ? `<span class="location-pill">/ ${escHtml(book.subcategory)}</span>` : ''}
               <span class="location-pill">📍 ${escHtml(book.location)}</span>
             </div>
           </div>
-          <button class="btn-delete" onclick="deleteBook(${book.id})" title="Rimuovi">${deleteSVG}</button>
+          <button class="btn-delete" onclick="deleteBook(${book.id})" title="Rimuovi">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/></svg>
+          </button>
         </div>
       `;
     }).join('');
+
+    renderPaginationControls(totalPages);
+  }
+
+  function renderPaginationControls(totalPages) {
+    let container = document.getElementById('pagination-controls');
+    
+    // Se il container non esiste, lo creiamo sotto la lista
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'pagination-controls';
+      container.className = 'pagination-flex';
+      document.getElementById('collection-section').appendChild(container);
+    }
+
+    // Se c'è solo una pagina, svuota il contenitore
+    if (totalPages <= 1) {
+      container.innerHTML = '';
+      return;
+    }
+
+    container.innerHTML = `
+      <button class="btn-page" ${state.currentPage === 1 ? 'disabled' : ''} onclick="changePage(-1)">
+        &larr; Prec
+      </button>
+      <div class="page-indicator">
+        Pagina <strong>${state.currentPage}</strong> di ${totalPages}
+      </div>
+      <button class="btn-page" ${state.currentPage === totalPages ? 'disabled' : ''} onclick="changePage(1)">
+        Succ &rarr;
+      </button>
+    `;
+  }
+
+  function changePage(step) {
+    state.currentPage += step;
+    renderCollection();
+    // Torna in cima alla sezione collezione per agevolare la lettura dei nuovi risultati
+    document.getElementById('collection-section').scrollIntoView({ behavior: 'smooth' });
   }
 
   function deleteBook(id) {
