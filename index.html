@@ -564,18 +564,20 @@
         <div class="input-group">
           <label for="r-category">Categoria</label>
           <div class="select-wrap">
-            <select id="r-category">
+            <select id="r-category" onchange="handleCategoryChange()">
+              <option value="">Seleziona...</option>
               </select>
           </div>
         </div>
-        <div class="input-group">
-          <label for="r-subcategory">Sottocategoria</label>
-          <div class="select-wrap">
-            <select id="r-subcategory"></select>
+
+        <div id="subcat-container" style="display: none; margin-top: 1rem;">
+          <div class="input-group">
+            <label for="r-subcategory">Sottocategoria</label>
+            <div class="select-wrap">
+              <select id="r-subcategory"></select>
+            </div>
+            <input type="text" id="r-subcategory-custom" placeholder="Nuova sottocategoria…" style="margin-top:0.375rem;"/>
           </div>
-          <input type="text" id="r-subcategory-custom" 
-                placeholder="Nuova sottocategoria…" 
-                style="margin-top:0.375rem;"/>
         </div>
         <div class="input-group full">
           <label for="r-notes">Note</label>
@@ -643,8 +645,7 @@
   let state = {
     collection: JSON.parse(localStorage.getItem('bookstack_collection') || '[]'),
     locations:  JSON.parse(localStorage.getItem('bookstack_locations')  || 'null') || [...DEFAULT_LOCATIONS],
-    // Carichiamo le sottocategorie salvate, o iniziamo con una lista vuota
-    subcategories: JSON.parse(localStorage.getItem('bookstack_subcategories') || '[]'),
+    subcategories: JSON.parse(localStorage.getItem('bookstack_subcategories') || '{}'), 
     currentBook: null
   };
 
@@ -919,14 +920,12 @@
   }
 
   function populateCategorySelects() {
-    // Popola Categorie (Fisse)
     const catSel = document.getElementById('r-category');
-    catSel.innerHTML = DEFAULT_CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('');
+    catSel.innerHTML = '<option value="">Scegli categoria...</option>' + 
+      DEFAULT_CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('');
 
-    // Popola Sottocategorie (Dinamiche)
     const subSel = document.getElementById('r-subcategory');
-    subSel.innerHTML = '<option value="">Nessuna sottocategoria</option>' +
-      state.subcategories.map(s => `<option value="${escHtml(s)}">${escHtml(s)}</option>`).join('');
+    subSel.innerHTML = '<option value="">Nessuna sottocategoria</option>';
   }
 
   function dismissResult() {
@@ -944,14 +943,17 @@
     
     const category = document.getElementById('r-category').value;
     
-    // Gestione Sottocategoria
     const subCustom = document.getElementById('r-subcategory-custom').value.trim();
     const subSelect = document.getElementById('r-subcategory').value;
     const subcategory = subCustom || subSelect || '';
 
-    // Se è una nuova sottocategoria, salviamola per il futuro
-    if (subCustom && !state.subcategories.includes(subCustom)) {
-      state.subcategories.push(subCustom);
+    if (subCustom && category) {
+      if (!state.subcategories[category]) {
+        state.subcategories[category] = [];
+      }
+      if (!state.subcategories[category].includes(subCustom)) {
+        state.subcategories[category].push(subCustom);
+      }
     }
 
     const status = document.getElementById('r-status').value;
@@ -970,6 +972,9 @@
     state.collection.unshift(entry);
     save();
     renderCollection();
+    
+    // Reset interfaccia e chiusura sezione risultato
+    document.getElementById('subcat-container').style.display = 'none';
     dismissResult();
     showToast('Libro aggiunto con successo');
   }
@@ -1097,6 +1102,29 @@
 
   /* ── Init ── */
   renderCollection();
+
+  function handleCategoryChange() {
+    const category = document.getElementById('r-category').value;
+    const container = document.getElementById('subcat-container');
+    const subSelect = document.getElementById('r-subcategory');
+    
+    if (!category) {
+      container.style.display = 'none';
+      return;
+    }
+
+    // Mostra il contenitore
+    container.style.display = 'block';
+
+    // Filtra le sottocategorie in base alla categoria scelta
+    const relevantSubs = state.subcategories[category] || [];
+    
+    subSelect.innerHTML = '<option value="">Nessuna sottocategoria</option>' +
+      relevantSubs.map(s => `<option value="${escHtml(s)}">${escHtml(s)}</option>`).join('');
+      
+    // Reset del campo di testo personalizzato
+    document.getElementById('r-subcategory-custom').value = '';
+  }
 </script>
 </body>
 </html>
