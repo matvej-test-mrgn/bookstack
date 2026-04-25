@@ -313,7 +313,7 @@ function escHtml(s) {
    Set your OAuth 2.0 Client ID from Google Cloud Console.
    Authorized JS origins must include the URL where BookStack is hosted.
    ════════════════════════════════════════════ */
-const GOOGLE_CLIENT_ID = ''; /* ← paste your Client ID here */
+const GOOGLE_CLIENT_ID = '352776428431-2l9bk0gjtbdkof13q1dai7pro92749as.apps.googleusercontent.com'; /* ← paste your Client ID here */
 const DRIVE_SCOPE      = 'https://www.googleapis.com/auth/drive.file';
 let   driveToken       = null;
 
