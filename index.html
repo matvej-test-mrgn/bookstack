@@ -156,6 +156,31 @@
   }
 
   /* ── Buttons ── */
+
+  .btn-add-inline {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--accent);
+    background: var(--accent-light);
+    color: var(--accent-dark);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .btn-add-inline:hover {
+    background: var(--accent);
+    color: white;
+  }
+
+  .input-group label { display: block; margin-bottom: 6px; }
+
   .btn-primary {
     width: 100%;
     padding: 0.8rem;
@@ -577,14 +602,45 @@
       </div>
 
       <div class="form-grid">
-        <div class="input-group full">
-          <label for="r-location">Luogo</label>
-          <div class="select-wrap">
-            <select id="r-location"></select>
+        <div class="input-group">
+          <label>Luogo</label>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <div class="select-wrap" style="flex-grow: 1;">
+              <select id="r-location"></select>
+            </div>
+            <button type="button" onclick="openQuickAdd('location')" class="btn-add-inline" title="Aggiungi Luogo">+</button>
           </div>
-          <input type="text" id="r-location-custom"
-            placeholder="Oppure scrivi un luogo…"
-            style="margin-top:0.375rem;"/>
+        </div>
+
+        <div class="input-group">
+          <label for="r-category">Categoria</label>
+          <div class="select-wrap">
+            <select id="r-category" onchange="handleCategoryChange()">
+              </select>
+          </div>
+        </div>
+
+        <div id="subcat-container" style="display: none; margin-top: 1rem;">
+          <div class="input-group">
+            <label>Sottocategoria</label>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <div class="select-wrap" style="flex-grow: 1;">
+                <select id="r-subcategory"></select>
+              </div>
+              <button type="button" onclick="openQuickAdd('subcategory')" class="btn-add-inline" title="Aggiungi Sottocategoria">+</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="quick-add-modal" class="modal" onclick="closeQuickAddOutside(event)">
+          <div class="modal-content" style="max-width: 300px;">
+            <h3 id="quick-add-title">Aggiungi</h3>
+            <input type="text" id="quick-add-input" placeholder="Scrivi qui..." style="margin-top:1rem; width:100%;">
+            <div style="display:flex; gap:10px; margin-top:1.5rem;">
+              <button class="btn-secondary" onclick="closeQuickAdd()" style="flex:1">Annulla</button>
+              <button class="btn-primary" onclick="confirmQuickAdd()" style="flex:1">Salva</button>
+            </div>
+          </div>
         </div>
         <div class="input-group full">
           <label for="r-status">Stato di lettura</label>
@@ -596,25 +652,6 @@
               <option value="Sospeso">Sospeso</option>
             </select>
           </div>
-        </div>
-        <div class="input-group">
-          <label for="r-category">Categoria</label>
-          <div class="select-wrap">
-            <select id="r-category" onchange="handleCategoryChange()">
-              <option value="">Seleziona...</option>
-              </select>
-          </div>
-        </div>
-
-        <div id="subcat-container" style="display: none; margin-top: 1rem;">
-          <div class="input-group">
-            <label for="r-subcategory">Sottocategoria</label>
-            <div class="select-wrap">
-              <select id="r-subcategory"></select>
-            </div>
-            <input type="text" id="r-subcategory-custom" placeholder="Nuova sottocategoria…" style="margin-top:0.375rem;"/>
-          </div>
-        </div>
         <div class="input-group full">
           <label for="r-notes">Note</label>
           <textarea id="r-notes" placeholder="Annotazioni personali…"></textarea>
@@ -677,6 +714,47 @@
   /* ── State ── */
   const DEFAULT_LOCATIONS = ['Scaffale studio', 'Soggiorno'];
   const DEFAULT_CATEGORIES = ['Narrativa', 'Saggistica', 'Poesia', 'Miscellanea', 'Rivista'];
+
+  let quickAddTarget = null; // 'location' o 'subcategory'
+
+  function openQuickAdd(target) {
+      quickAddTarget = target;
+      const title = target === 'location' ? 'Nuovo Luogo' : 'Nuova Sottocategoria';
+      document.getElementById('quick-add-title').textContent = title;
+      document.getElementById('quick-add-input').value = '';
+      document.getElementById('quick-add-modal').classList.add('open');
+      setTimeout(() => document.getElementById('quick-add-input').focus(), 100);
+  }
+
+  function closeQuickAdd() {
+      document.getElementById('quick-add-modal').classList.remove('open');
+  }
+
+  function confirmQuickAdd() {
+      const val = document.getElementById('quick-add-input').value.trim();
+      if (!val) return;
+
+      if (quickAddTarget === 'location') {
+          if (!state.locations.includes(val)) {
+              state.locations.push(val);
+              save();
+              populateLocationSelect();
+              document.getElementById('r-location').value = val;
+          }
+      } else {
+          const cat = document.getElementById('r-category').value;
+          if (!cat) return showToast("Scegli prima una categoria");
+          
+          if (!state.subcategories[cat]) state.subcategories[cat] = [];
+          if (!state.subcategories[cat].includes(val)) {
+              state.subcategories[cat].push(val);
+              save();
+              handleCategoryChange(); // Aggiorna la lista sottocategorie
+              document.getElementById('r-subcategory').value = val;
+          }
+      }
+      closeQuickAdd();
+  }
 
   let state = {
     collection: JSON.parse(localStorage.getItem('bookstack_collection') || '[]'),
@@ -974,47 +1052,46 @@
 
   /* ── Add to collection ── */
   function addToCollection() {
-    if (!state.currentBook) return;
-    
-    const location = document.getElementById('r-location-custom').value.trim() || 
-                    document.getElementById('r-location').value || 'Non specificato';
-    
-    const category = document.getElementById('r-category').value;
-    
-    const subCustom = document.getElementById('r-subcategory-custom').value.trim();
-    const subSelect = document.getElementById('r-subcategory').value;
-    const subcategory = subCustom || subSelect || '';
+      if (!state.currentBook) return;
 
-    if (subCustom && category) {
-      if (!state.subcategories[category]) {
-        state.subcategories[category] = [];
+      const location = document.getElementById('r-location').value || 'Non specificato';
+      const category = document.getElementById('r-category').value;
+      const subcategory = document.getElementById('r-subcategory').value || '';
+
+      if (!category) {
+          showToast("Seleziona una categoria");
+          return;
       }
-      if (!state.subcategories[category].includes(subCustom)) {
-        state.subcategories[category].push(subCustom);
-      }
-    }
 
-    const status = document.getElementById('r-status').value;
-    const notes  = document.getElementById('r-notes').value.trim();
+      const status = document.getElementById('r-status').value;
+      const notes  = document.getElementById('r-notes').value.trim();
 
-    const entry = { 
-      ...state.currentBook, 
-      location, 
-      category, 
-      subcategory, 
-      status, 
-      notes, 
-      id: Date.now() 
-    };
-    
-    state.collection.unshift(entry);
-    save();
-    renderCollection();
-    
-    // Reset interfaccia e chiusura sezione risultato
-    document.getElementById('subcat-container').style.display = 'none';
-    dismissResult();
-    showToast('Libro aggiunto con successo');
+      const entry = { 
+          ...state.currentBook, 
+          location, 
+          category, 
+          subcategory, 
+          status, 
+          notes, 
+          id: Date.now() 
+      };
+      
+      state.collection.unshift(entry);
+      save();
+      
+      // Torna alla prima pagina per vedere il nuovo libro
+      state.currentPage = 1; 
+      renderCollection();
+      
+      // Reset e chiusura
+      document.getElementById('subcat-container').style.display = 'none';
+      dismissResult(); 
+      showToast('Libro aggiunto con successo');
+  }
+
+  // Funzione di chiusura cliccando fuori
+  function closeQuickAddOutside(e) {
+      if (e.target.id === 'quick-add-modal') closeQuickAdd();
   }
 
   /* ── Collection render ── */
