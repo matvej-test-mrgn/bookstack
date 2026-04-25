@@ -190,10 +190,59 @@
         onkeydown="if(event.key==='Enter') addLocation()"/>
       <button onclick="addLocation()">Aggiungi</button>
     </div>
+
+    <div class="settings-divider"></div>
+
+    <input type="file" id="import-file-input" accept=".csv" style="display:none;" onchange="importCatalog(event)">
+    <button class="btn-import" onclick="document.getElementById('import-file-input').click()">
+      <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 13V3M6 7l4-4 4 4"/>
+        <path d="M3 15v1a2 2 0 002 2h10a2 2 0 002-2v-1"/>
+      </svg>
+      Importa catalogo…
+    </button>
+    <div id="import-feedback" style="display:none;"></div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- ── Confirm modal ── -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="confirm-title">Conferma</span>
+    </div>
+    <p id="confirm-message" class="confirm-message"></p>
+    <div class="confirm-actions">
+      <button class="btn-primary btn-danger" id="confirm-ok">Conferma</button>
+      <button class="btn-secondary" onclick="closeConfirm()">Annulla</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Footer ── -->
+<footer class="app-footer">
+  <div class="footer-exports">
+    <button class="btn-footer-action" onclick="exportCSV()">
+      <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 3v10M6 13l4 4 4-4"/>
+        <path d="M3 15v1a2 2 0 002 2h10a2 2 0 002-2v-1"/>
+      </svg>
+      Esporta CSV
+    </button>
+    <button class="btn-footer-action btn-drive" onclick="exportToGoogleDrive()">
+      <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 15l3.5-6L10 15"/>
+        <path d="M17 15l-3.5-6L10 15"/>
+        <path d="M6.5 9L10 3l3.5 6"/>
+        <path d="M3 15h14"/>
+      </svg>
+      Esporta su Google Drive
+    </button>
+  </div>
+  <span class="delete-all-link" onclick="confirmDeleteAll()">Elimina catalogo</span>
+</footer>
 
 <!-- ZXing -->
 <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>

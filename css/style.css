@@ -403,3 +403,108 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
   cursor: pointer; white-space: nowrap;
 }
 .add-location button:hover { background: var(--accent-dark); }
+
+/* ── Settings divider ── */
+.settings-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 1rem 0;
+}
+
+/* ── Import button ── */
+.btn-import {
+  width: 100%;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 0.7rem;
+  background: transparent;
+  color: var(--text-2);
+  border: 1px dashed var(--border-2);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-ui);
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-import:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+
+.import-feedback {
+  margin-top: 0.625rem;
+  padding: 0.625rem 0.875rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.import-feedback.success { background: #E8F5E9; color: #2E7D32; }
+.import-feedback.error   { background: #FDECEA; color: var(--red); }
+
+/* ── Confirm modal ── */
+.confirm-message {
+  font-size: 0.9375rem;
+  color: var(--text-2);
+  line-height: 1.6;
+  margin-bottom: 1.25rem;
+}
+.confirm-actions {
+  display: flex; flex-direction: column; gap: 0.5rem;
+}
+.btn-danger {
+  background: var(--red) !important;
+}
+.btn-danger:hover { background: #a93226 !important; }
+
+/* ── Footer ── */
+.app-footer {
+  width: 100%;
+  max-width: 480px;
+  padding: 0 1.25rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.25rem;
+}
+
+.footer-exports {
+  display: flex;
+  gap: 0.625rem;
+  width: 100%;
+}
+
+.btn-footer-action {
+  flex: 1;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 0.65rem 0.75rem;
+  background: var(--surface);
+  color: var(--text-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-footer-action:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-light);
+}
+.btn-footer-action.btn-drive:hover {
+  border-color: #1A56C4;
+  color: #1A56C4;
+  background: #E8F0FE;
+}
+
+.delete-all-link {
+  font-size: 0.8125rem;
+  color: var(--text-3);
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 2px;
+  transition: color 0.15s, text-decoration-color 0.15s;
+}
+.delete-all-link:hover {
+  color: var(--red);
+  text-decoration-color: var(--red);
+}
