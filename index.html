@@ -551,6 +551,22 @@
             </select>
           </div>
         </div>
+        <div class="input-group">
+          <label for="r-category">Categoria</label>
+          <div class="select-wrap">
+            <select id="r-category">
+              </select>
+          </div>
+        </div>
+        <div class="input-group">
+          <label for="r-subcategory">Sottocategoria</label>
+          <div class="select-wrap">
+            <select id="r-subcategory"></select>
+          </div>
+          <input type="text" id="r-subcategory-custom" 
+                placeholder="Nuova sottocategoria…" 
+                style="margin-top:0.375rem;"/>
+        </div>
         <div class="input-group full">
           <label for="r-notes">Note</label>
           <textarea id="r-notes" placeholder="Annotazioni personali…"></textarea>
@@ -611,11 +627,14 @@
 
 <script>
   /* ── State ── */
-  const DEFAULT_LOCATIONS = ['Scaffale studio', 'Camera da letto', 'Soggiorno'];
+  const DEFAULT_LOCATIONS = ['Scaffale studio', 'Soggiorno'];
+  const DEFAULT_CATEGORIES = ['Narrativa', 'Saggistica', 'Poesia', 'Miscellanea', 'Rivista'];
 
   let state = {
     collection: JSON.parse(localStorage.getItem('bookstack_collection') || '[]'),
     locations:  JSON.parse(localStorage.getItem('bookstack_locations')  || 'null') || [...DEFAULT_LOCATIONS],
+    // Carichiamo le sottocategorie salvate, o iniziamo con una lista vuota
+    subcategories: JSON.parse(localStorage.getItem('bookstack_subcategories') || '[]'),
     currentBook: null
   };
 
@@ -623,6 +642,7 @@
   function save() {
     localStorage.setItem('bookstack_collection', JSON.stringify(state.collection));
     localStorage.setItem('bookstack_locations',  JSON.stringify(state.locations));
+    localStorage.setItem('bookstack_subcategories', JSON.stringify(state.subcategories));
   }
 
   /* ═══════════════════════════════════════════
@@ -881,9 +901,21 @@
     }
 
     populateLocationSelect();
+    populateCategorySelects();
     const section = document.getElementById('result-section');
     section.classList.add('visible');
     section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function populateCategorySelects() {
+    // Popola Categorie (Fisse)
+    const catSel = document.getElementById('r-category');
+    catSel.innerHTML = DEFAULT_CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('');
+
+    // Popola Sottocategorie (Dinamiche)
+    const subSel = document.getElementById('r-subcategory');
+    subSel.innerHTML = '<option value="">Nessuna sottocategoria</option>' +
+      state.subcategories.map(s => `<option value="${escHtml(s)}">${escHtml(s)}</option>`).join('');
   }
 
   function dismissResult() {
@@ -895,19 +927,40 @@
   /* ── Add to collection ── */
   function addToCollection() {
     if (!state.currentBook) return;
-    const custom   = document.getElementById('r-location-custom').value.trim();
-    const select   = document.getElementById('r-location').value;
-    const location = custom || select || 'Non specificato';
-    const status   = document.getElementById('r-status').value;
-    const notes    = document.getElementById('r-notes').value.trim();
-    const dateAdded = new Date().toLocaleDateString('it-IT');
+    
+    const location = document.getElementById('r-location-custom').value.trim() || 
+                    document.getElementById('r-location').value || 'Non specificato';
+    
+    const category = document.getElementById('r-category').value;
+    
+    // Gestione Sottocategoria
+    const subCustom = document.getElementById('r-subcategory-custom').value.trim();
+    const subSelect = document.getElementById('r-subcategory').value;
+    const subcategory = subCustom || subSelect || '';
 
-    const entry = { ...state.currentBook, location, status, notes, dateAdded, id: Date.now() };
+    // Se è una nuova sottocategoria, salviamola per il futuro
+    if (subCustom && !state.subcategories.includes(subCustom)) {
+      state.subcategories.push(subCustom);
+    }
+
+    const status = document.getElementById('r-status').value;
+    const notes  = document.getElementById('r-notes').value.trim();
+
+    const entry = { 
+      ...state.currentBook, 
+      location, 
+      category, 
+      subcategory, 
+      status, 
+      notes, 
+      id: Date.now() 
+    };
+    
     state.collection.unshift(entry);
     save();
     renderCollection();
     dismissResult();
-    showToast('Libro aggiunto alla collezione');
+    showToast('Libro aggiunto con successo');
   }
 
   /* ── Collection render ── */
