@@ -1,518 +1,11 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BookStack</title>
-<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
-<style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg: #F7F5F0;
-    --surface: #FFFFFF;
-    --surface-2: #F0EDE7;
-    --text: #1A1A18;
-    --text-2: #6B6860;
-    --text-3: #A09D98;
-    --accent: #2A7A6F;
-    --accent-light: #E4F2F0;
-    --accent-dark: #1F5C54;
-    --border: #E3E0DA;
-    --border-2: #CCC9C2;
-    --red: #C0392B;
-    --font-brand: 'Lora', Georgia, serif;
-    --font-ui: 'Outfit', system-ui, sans-serif;
-    --radius: 12px;
-    --radius-sm: 8px;
-  }
-
-  body {
-    font-family: var(--font-ui);
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding-bottom: 3rem;
-  }
-
-  /* ── Header ── */
-  header {
-    width: 100%;
-    max-width: 480px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 1.25rem 1.25rem 0;
-  }
-
-  .brand {
-    font-family: var(--font-brand);
-    font-size: 1.45rem;
-    font-weight: 600;
-    color: var(--text);
-    letter-spacing: -0.02em;
-  }
-  .brand span { color: var(--accent); font-style: italic; }
-
-  .btn-icon {
-    width: 36px; height: 36px;
-    border-radius: 50%;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    color: var(--text-2);
-    transition: background 0.15s, border-color 0.15s;
-    padding: 0;
-  }
-  .btn-icon:hover { background: var(--surface-2); border-color: var(--border-2); }
-  .btn-icon svg { width: 16px; height: 16px; }
-
-  /* ── Main ── */
-  main {
-    width: 100%;
-    max-width: 480px;
-    padding: 1.25rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  /* ── Card ── */
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 1.25rem;
-  }
-
-  /* ── Tabs ── */
-  .tabs {
-    display: flex;
-    background: var(--surface-2);
-    border-radius: var(--radius-sm);
-    padding: 3px;
-    gap: 2px;
-    margin-bottom: 1.25rem;
-  }
-  .tab {
-    flex: 1;
-    padding: 0.5rem;
-    border: none;
-    border-radius: 6px;
-    background: transparent;
-    font-family: var(--font-ui);
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--text-2);
-    cursor: pointer;
-    transition: all 0.15s;
-    display: flex; align-items: center; justify-content: center; gap: 6px;
-  }
-  .tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.07); }
-
-  /* ── Inputs ── */
-  .input-group { display: flex; flex-direction: column; gap: 0.5rem; }
-
-  label {
-    font-size: 0.8125rem;
-    font-weight: 500;
-    color: var(--text-2);
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-  }
-
-  input[type="text"], select, textarea {
-    width: 100%;
-    padding: 0.7rem 0.875rem;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    font-family: var(--font-ui);
-    font-size: 1rem;
-    color: var(--text);
-    background: var(--bg);
-    outline: none;
-    transition: border-color 0.15s;
-    appearance: none;
-  }
-  input[type="text"]:focus, select:focus, textarea:focus {
-    border-color: var(--accent); background: var(--surface);
-  }
-  input::placeholder { color: var(--text-3); }
-  textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
-
-  .select-wrap { position: relative; }
-  .select-wrap::after {
-    content: '';
-    position: absolute; right: 0.875rem; top: 50%; transform: translateY(-50%);
-    width: 0; height: 0;
-    border-left: 4px solid transparent;
-    border-right: 4px solid transparent;
-    border-top: 5px solid var(--text-3);
-    pointer-events: none;
-  }
-
-  /* ── Buttons ── */
-
-  .btn-add-inline {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    border: 1px solid var(--accent);
-    background: var(--accent-light);
-    color: var(--accent-dark);
-    font-size: 20px;
-    line-height: 1;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-    flex-shrink: 0;
-  }
-
-  .btn-add-inline:hover {
-    background: var(--accent);
-    color: white;
-  }
-
-  .input-group label { display: block; margin-bottom: 6px; }
-
-  .btn-primary {
-    width: 100%;
-    padding: 0.8rem;
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    border-radius: var(--radius-sm);
-    font-family: var(--font-ui);
-    font-size: 1rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.15s;
-    letter-spacing: 0.01em;
-  }
-  .btn-primary:hover { background: var(--accent-dark); }
-  .btn-primary:active { transform: scale(0.99); }
-  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-
-  .btn-secondary {
-    width: 100%;
-    padding: 0.7rem;
-    background: transparent;
-    color: var(--text-2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    font-family: var(--font-ui);
-    font-size: 0.9375rem;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .btn-secondary:hover { border-color: var(--border-2); color: var(--text); background: var(--surface-2); }
-
-  /* ── Camera panel ── */
-  .camera-wrap {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 4/3;
-    background: #111;
-    border-radius: var(--radius-sm);
-    overflow: hidden;
-    margin-bottom: 0.875rem;
-  }
-
-  #camera-video {
-    width: 100%; height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-
-  .scan-overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
-  }
-
-  .scan-frame {
-    width: 62%;
-    aspect-ratio: 3/1;
-    position: relative;
-  }
-
-  /* Corner brackets */
-  .scan-frame::before, .scan-frame::after,
-  .scan-frame .corner-bl, .scan-frame .corner-br {
-    content: '';
-    position: absolute;
-    width: 18px; height: 18px;
-    border-color: rgba(255,255,255,0.9);
-    border-style: solid;
-  }
-  .scan-frame::before  { top: 0;    left: 0;  border-width: 2px 0 0 2px; border-radius: 2px 0 0 0; }
-  .scan-frame::after   { top: 0;    right: 0; border-width: 2px 2px 0 0; border-radius: 0 2px 0 0; content: ''; }
-  .scan-frame .corner-bl { bottom: 0; left: 0;  border-width: 0 0 2px 2px; border-radius: 0 0 0 2px; }
-  .scan-frame .corner-br { bottom: 0; right: 0; border-width: 0 2px 2px 0; border-radius: 0 0 2px 0; }
-
-  @keyframes scanline {
-    0%   { top: 8%; opacity: 1; }
-    48%  { opacity: 1; }
-    50%  { top: 92%; opacity: 1; }
-    51%  { opacity: 0; }
-    100% { top: 8%; opacity: 0; }
-  }
-
-  .scan-line {
-    position: absolute;
-    left: 0; right: 0;
-    height: 1.5px;
-    background: linear-gradient(90deg, transparent, rgba(42,122,111,0.9), transparent);
-    top: 8%;
-    animation: scanline 2s ease-in-out infinite;
-  }
-
-  .camera-status {
-    text-align: center;
-    font-size: 0.8125rem;
-    color: var(--text-3);
-    margin-bottom: 0.875rem;
-    min-height: 1.2em;
-    transition: color 0.2s;
-  }
-  .camera-status.active { color: var(--accent); }
-  .camera-status.error  { color: var(--red); }
-
-  .camera-idle {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.625rem;
-    padding: 2.5rem 1rem;
-    color: var(--text-3);
-    text-align: center;
-  }
-  .camera-idle svg { width: 36px; height: 36px; opacity: 0.4; margin-bottom: 0.25rem; }
-  .camera-idle p { font-size: 0.875rem; max-width: 200px; line-height: 1.5; }
-
-  /* Pagination */
-
-  .pagination-flex {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1.5rem;
-    margin: 2rem 0;
-    padding: 1rem;
-    font-family: var(--font-ui);
-    font-size: 0.9rem;
-    color: var(--text-2);
-  }
-
-  .btn-page {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    padding: 0.5rem 1rem;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: all 0.2s;
-    color: var(--text);
-    font-weight: 500;
-  }
-
-  .btn-page:hover:not(:disabled) {
-    background: var(--accent-light);
-    border-color: var(--accent);
-    color: var(--accent-dark);
-  }
-
-  .btn-page:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  /* ── Result card ── */
-  #result-section { display: none; }
-  #result-section.visible { display: block; }
-
-  .book-meta {
-    padding-bottom: 1rem;
-    margin-bottom: 1rem;
-    border-bottom: 1px solid var(--border);
-  }
-  .book-title {
-    font-family: var(--font-brand);
-    font-size: 1.125rem;
-    font-weight: 600;
-    line-height: 1.35;
-    margin-bottom: 0.25rem;
-  }
-  .book-author { font-size: 0.9375rem; color: var(--text-2); margin-bottom: 0.625rem; }
-  .book-tags { display: flex; flex-wrap: wrap; gap: 6px; }
-
-  .tag {
-    font-size: 0.75rem;
-    padding: 3px 8px;
-    border-radius: 4px;
-    background: var(--surface-2);
-    color: var(--text-2);
-    border: 1px solid var(--border);
-  }
-  .tag.isbn {
-    background: var(--accent-light);
-    color: var(--accent-dark);
-    border-color: transparent;
-    font-family: monospace;
-    font-size: 0.8125rem;
-  }
-  .tag.source-google      { background: #E8F0FE; color: #1A56C4; border-color: transparent; }
-  .tag.source-openlibrary { background: #FEF3E2; color: #B45309; border-color: transparent; }
-  .tag.source-sbn         { background: #F0FDF4; color: #166534; border-color: transparent; }
-
-  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
-  .form-grid .full { grid-column: 1 / -1; }
-
-  /* ── Status pills ── */
-  .status-letto      { background: #E8F5E9; color: #2E7D32; }
-  .status-in-lettura { background: #E3F2FD; color: #1565C0; }
-  .status-da-leggere { background: #FFF3E0; color: #E65100; }
-  .status-sospeso    { background: #F3E5F5; color: #6A1B9A; }
-
-  /* ── Loading ── */
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .spinner {
-    width: 16px; height: 16px;
-    border: 2px solid var(--border-2);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    flex-shrink: 0;
-  }
-  .source-steps { display: flex; flex-direction: column; gap: 4px; }
-  .source-step { display: flex; align-items: center; gap: 6px; font-size: 0.8125rem; color: var(--text-3); }
-  .source-step.done   { color: var(--accent); }
-  .source-step.active { color: var(--text-2); }
-  .source-step .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
-  .source-step .check { font-size: 11px; }
-
-  /* ── Collection ── */
-  .section-header {
-    display: flex; align-items: baseline; justify-content: space-between;
-    margin-bottom: 0.75rem;
-  }
-  .section-title {
-    font-size: 0.75rem; font-weight: 600;
-    letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3);
-  }
-  .count-badge {
-    font-size: 0.75rem; padding: 1px 7px;
-    background: var(--accent-light); color: var(--accent);
-    border-radius: 10px; font-weight: 500;
-  }
-  .collection-empty {
-    text-align: center; padding: 2rem 1rem;
-    color: var(--text-3); font-size: 0.875rem; line-height: 1.6;
-  }
-  .collection-empty svg { width: 32px; height: 32px; opacity: 0.3; margin-bottom: 0.75rem; }
-
-  .book-item {
-    display: flex; align-items: flex-start; gap: 0.875rem;
-    padding: 0.875rem 0; border-bottom: 1px solid var(--border);
-  }
-  .book-item:last-child { border-bottom: none; padding-bottom: 0; }
-  .book-item:first-child { padding-top: 0; }
-
-  .book-cover-img {
-    width: 45px; /* Leggermente più largo del dorso */
-    height: 65px;
-    border-radius: 4px;
-    object-fit: cover;
-    background: var(--surface-2);
-    border: 1px solid var(--border);
-    flex-shrink: 0;
-  }
-
-  .book-spine {
-    width: 45px; height: 65px; border-radius: 4px;
-    background: var(--accent-light); display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; font-family: var(--font-brand); font-style: italic; font-size: 0.6875rem;
-    color: var(--accent); writing-mode: vertical-rl; overflow: hidden; padding: 4px 0;
-  }
-  .book-info { flex: 1; min-width: 0; }
-  .book-item-title {
-    font-weight: 500; font-size: 0.9375rem;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px;
-  }
-  .book-item-meta { font-size: 0.8125rem; color: var(--text-2); margin-bottom: 0.375rem; }
-  .book-item-footer { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-
-  .status-pill { font-size: 0.6875rem; padding: 2px 7px; border-radius: 10px; font-weight: 500; }
-  .location-pill { font-size: 0.6875rem; color: var(--text-3); }
-
-  .btn-delete {
-    background: none; border: none; cursor: pointer;
-    color: var(--text-3); padding: 4px; flex-shrink: 0;
-    transition: color 0.15s; line-height: 1;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .btn-delete:hover { color: var(--red); }
-  .btn-delete svg { width: 14px; height: 14px; }
-
-  /* ── Toast ── */
-  .toast {
-    position: fixed; bottom: 1.5rem; left: 50%;
-    transform: translateX(-50%) translateY(60px);
-    background: var(--text); color: #fff;
-    font-size: 0.875rem; padding: 0.625rem 1.25rem;
-    border-radius: 20px; opacity: 0;
-    transition: all 0.25s ease; pointer-events: none;
-    white-space: nowrap; z-index: 100;
-  }
-  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-
-  /* ── Settings modal ── */
-  .modal-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.35);
-    display: flex; align-items: flex-end; justify-content: center;
-    z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.2s;
-  }
-  .modal-overlay.open { opacity: 1; pointer-events: all; }
-  .modal {
-    background: var(--surface); border-radius: var(--radius) var(--radius) 0 0;
-    padding: 1.5rem 1.25rem 2rem; width: 100%; max-width: 480px;
-    transform: translateY(40px); transition: transform 0.25s ease;
-  }
-  .modal-overlay.open .modal { transform: translateY(0); }
-  .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
-  .modal-title { font-family: var(--font-brand); font-size: 1.125rem; font-weight: 600; }
-
-  .location-list { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }
-  .location-item {
-    display: flex; align-items: center; gap: 0.625rem;
-    padding: 0.625rem 0.875rem;
-    background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
-    font-size: 0.9375rem;
-  }
-  .location-item .loc-dot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--accent); flex-shrink: 0;
-  }
-  .location-item span { flex: 1; }
-  .add-location { display: flex; gap: 0.5rem; }
-  .add-location input { flex: 1; }
-  .add-location button {
-    padding: 0 1rem; background: var(--accent); color: #fff;
-    border: none; border-radius: var(--radius-sm);
-    font-family: var(--font-ui); font-size: 0.9375rem;
-    cursor: pointer; white-space: nowrap;
-  }
-  .add-location button:hover { background: var(--accent-dark); }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BookStack</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
@@ -528,7 +21,7 @@
 
 <main>
 
-  <!-- Input card -->
+  <!-- ── Scan card ── -->
   <div class="card">
     <div class="tabs">
       <button class="tab" id="tab-camera" onclick="switchTab('camera')">
@@ -542,8 +35,7 @@
       <button class="tab active" id="tab-manual" onclick="switchTab('manual')">
         <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
           <path d="M3 17.5V3.5a1 1 0 011-1h8l4 4V17.5a1 1 0 01-1 1H4a1 1 0 01-1-1z"/>
-          <path d="M11 2.5V7h4.5"/>
-          <path d="M7 11h6M7 14h4"/>
+          <path d="M11 2.5V7h4.5"/><path d="M7 11h6M7 14h4"/>
         </svg>
         Manuale
       </button>
@@ -587,60 +79,29 @@
     </div>
   </div>
 
-  <!-- Result section -->
+  <!-- ── Result card ── -->
   <div id="result-section">
     <div class="card">
       <div class="book-meta">
-        <div class="book-title" id="r-title">—</div>
+        <div class="book-title"  id="r-title">—</div>
         <div class="book-author" id="r-author">—</div>
         <div class="book-tags">
-          <span class="tag" id="r-year">—</span>
-          <span class="tag" id="r-publisher">—</span>
+          <span class="tag"      id="r-year">—</span>
+          <span class="tag"      id="r-publisher">—</span>
           <span class="tag isbn" id="r-isbn">—</span>
-          <span class="tag" id="r-source" style="display:none;"></span>
+          <span class="tag"      id="r-source" style="display:none;"></span>
         </div>
       </div>
 
       <div class="form-grid">
-        <div class="input-group">
-          <label>Luogo</label>
-          <div style="display: flex; gap: 8px; align-items: center;">
-            <div class="select-wrap" style="flex-grow: 1;">
-              <select id="r-location"></select>
-            </div>
-            <button type="button" onclick="openQuickAdd('location')" class="btn-add-inline" title="Aggiungi Luogo">+</button>
-          </div>
-        </div>
-
-        <div class="input-group">
-          <label for="r-category">Categoria</label>
+        <div class="input-group full">
+          <label for="r-location">Luogo</label>
           <div class="select-wrap">
-            <select id="r-category" onchange="handleCategoryChange()">
-              </select>
+            <select id="r-location"></select>
           </div>
-        </div>
-
-        <div id="subcat-container" style="display: none; margin-top: 1rem;">
-          <div class="input-group">
-            <label>Sottocategoria</label>
-            <div style="display: flex; gap: 8px; align-items: center;">
-              <div class="select-wrap" style="flex-grow: 1;">
-                <select id="r-subcategory"></select>
-              </div>
-              <button type="button" onclick="openQuickAdd('subcategory')" class="btn-add-inline" title="Aggiungi Sottocategoria">+</button>
-            </div>
-          </div>
-        </div>
-
-        <div id="quick-add-modal" class="modal" onclick="closeQuickAddOutside(event)">
-          <div class="modal-content" style="max-width: 300px;">
-            <h3 id="quick-add-title">Aggiungi</h3>
-            <input type="text" id="quick-add-input" placeholder="Scrivi qui..." style="margin-top:1rem; width:100%;">
-            <div style="display:flex; gap:10px; margin-top:1.5rem;">
-              <button class="btn-secondary" onclick="closeQuickAdd()" style="flex:1">Annulla</button>
-              <button class="btn-primary" onclick="confirmQuickAdd()" style="flex:1">Salva</button>
-            </div>
-          </div>
+          <input type="text" id="r-location-custom"
+            placeholder="Oppure scrivi un luogo…"
+            style="margin-top:0.375rem;"/>
         </div>
         <div class="input-group full">
           <label for="r-status">Stato di lettura</label>
@@ -652,40 +113,67 @@
               <option value="Sospeso">Sospeso</option>
             </select>
           </div>
+        </div>
         <div class="input-group full">
           <label for="r-notes">Note</label>
           <textarea id="r-notes" placeholder="Annotazioni personali…"></textarea>
         </div>
       </div>
 
-      <div style="display:flex; flex-direction:column; gap:0.5rem; margin-top:1rem;">
+      <div class="result-actions">
         <button class="btn-primary" onclick="addToCollection()">Aggiungi alla collezione</button>
         <button class="btn-secondary" onclick="dismissResult()">Annulla</button>
       </div>
     </div>
   </div>
 
-  <!-- Collection -->
+  <!-- ── Collection ── -->
   <div>
     <div class="section-header">
       <span class="section-title">Collezione</span>
-      <span class="count-badge" id="collection-count">0</span>
+      <div class="collection-controls">
+        <label for="per-page-select" class="per-page-label">Libri per pagina</label>
+        <div class="select-wrap select-wrap-inline">
+          <select id="per-page-select" onchange="changePerPage(this.value)">
+            <option value="5">5</option>
+            <option value="10" selected>10</option>
+            <option value="15">15</option>
+            <option value="25">25</option>
+          </select>
+        </div>
+        <span class="count-badge" id="collection-count">0</span>
+      </div>
     </div>
+
     <div class="card" id="collection-list">
       <div class="collection-empty" id="collection-empty">
-        <div>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 0.75rem;">
-            <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
-          </svg>
-        </div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
+        </svg>
         Nessun libro ancora.<br>Cerca un ISBN per iniziare.
       </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" id="pagination" style="display:none;">
+      <button class="page-btn" id="page-prev" onclick="changePage(-1)">
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M13 4l-6 6 6 6"/>
+        </svg>
+      </button>
+      <span class="page-info" id="page-info">1 / 1</span>
+      <button class="page-btn" id="page-next" onclick="changePage(1)">
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M7 4l6 6-6 6"/>
+        </svg>
+      </button>
     </div>
   </div>
 
 </main>
 
-<!-- Settings modal -->
+<!-- ── Settings modal ── -->
 <div class="modal-overlay" id="settings-modal" onclick="closeSettingsOutside(event)">
   <div class="modal">
     <div class="modal-header">
@@ -707,590 +195,12 @@
 
 <div class="toast" id="toast"></div>
 
-<!-- ZXing barcode library -->
+<!-- ZXing -->
 <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
+<!-- App modules (order matters) -->
+<script src="js/api.js"></script>
+<script src="js/camera.js"></script>
+<script src="js/app.js"></script>
 
-<script>
-  /* ── State ── */
-  const DEFAULT_LOCATIONS = ['Scaffale studio', 'Soggiorno'];
-  const DEFAULT_CATEGORIES = ['Narrativa', 'Saggistica', 'Poesia', 'Miscellanea', 'Rivista'];
-
-  let quickAddTarget = null; // 'location' o 'subcategory'
-
-  function openQuickAdd(target) {
-      quickAddTarget = target;
-      const title = target === 'location' ? 'Nuovo Luogo' : 'Nuova Sottocategoria';
-      document.getElementById('quick-add-title').textContent = title;
-      document.getElementById('quick-add-input').value = '';
-      document.getElementById('quick-add-modal').classList.add('open');
-      setTimeout(() => document.getElementById('quick-add-input').focus(), 100);
-  }
-
-  function closeQuickAdd() {
-      document.getElementById('quick-add-modal').classList.remove('open');
-  }
-
-  function confirmQuickAdd() {
-      const val = document.getElementById('quick-add-input').value.trim();
-      if (!val) return;
-
-      if (quickAddTarget === 'location') {
-          if (!state.locations.includes(val)) {
-              state.locations.push(val);
-              save();
-              populateLocationSelect();
-              document.getElementById('r-location').value = val;
-          }
-      } else {
-          const cat = document.getElementById('r-category').value;
-          if (!cat) return showToast("Scegli prima una categoria");
-          
-          if (!state.subcategories[cat]) state.subcategories[cat] = [];
-          if (!state.subcategories[cat].includes(val)) {
-              state.subcategories[cat].push(val);
-              save();
-              handleCategoryChange(); // Aggiorna la lista sottocategorie
-              document.getElementById('r-subcategory').value = val;
-          }
-      }
-      closeQuickAdd();
-  }
-
-  let state = {
-    collection: JSON.parse(localStorage.getItem('bookstack_collection') || '[]'),
-    locations:  JSON.parse(localStorage.getItem('bookstack_locations')  || 'null') || [...DEFAULT_LOCATIONS],
-    subcategories: JSON.parse(localStorage.getItem('bookstack_subcategories') || '{}'), 
-    currentBook: null,
-    currentPage: 1,
-    booksPerPage: 10
-  };
-
-  /* ── Persist ── */
-  function save() {
-    localStorage.setItem('bookstack_collection', JSON.stringify(state.collection));
-    localStorage.setItem('bookstack_locations',  JSON.stringify(state.locations));
-    localStorage.setItem('bookstack_subcategories', JSON.stringify(state.subcategories));
-  }
-
-  /* ═══════════════════════════════════════════
-     CAMERA — ZXing
-  ═══════════════════════════════════════════ */
-  let codeReader = null;
-  let cameraActive = false;
-
-  function toggleCamera() {
-    cameraActive ? stopCamera() : startCamera();
-  }
-
-  async function startCamera() {
-    const btn     = document.getElementById('btn-camera-toggle');
-    const status  = document.getElementById('camera-status');
-    const video   = document.getElementById('camera-video');
-    const idle    = document.getElementById('camera-idle');
-    const overlay = document.getElementById('scan-overlay');
-
-    try {
-      status.textContent = 'Avvio fotocamera…';
-      status.className   = 'camera-status';
-      btn.disabled = true;
-
-      if (!ZXing) throw new Error('Libreria ZXing non disponibile');
-
-      codeReader = new ZXing.BrowserMultiFormatReader();
-
-      /* Request rear camera */
-      const constraints = {
-        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } }
-      };
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      video.srcObject = stream;
-      await video.play();
-
-      idle.style.display    = 'none';
-      video.style.display   = 'block';
-      overlay.style.display = 'flex';
-      cameraActive = true;
-      btn.disabled  = false;
-      btn.textContent = 'Interrompi scansione';
-      status.textContent = 'Inquadra il codice a barre del libro';
-      status.className   = 'camera-status active';
-
-      /* Start decoding loop */
-      codeReader.decodeFromStream(stream, video, (result, err) => {
-        if (!result) return;
-        const raw = result.getText();
-        /* Accept only ISBN-like strings (10 or 13 digits) */
-        const clean = raw.replace(/[^0-9X]/gi, '');
-        if (clean.length !== 10 && clean.length !== 13) return;
-
-        stopCamera();
-        document.getElementById('isbn-input').value = raw;
-        switchTab('manual');
-        showToast('Codice rilevato — ricerca in corso');
-        searchISBN();
-      });
-
-    } catch(err) {
-      status.textContent = err.name === 'NotAllowedError'
-        ? 'Accesso alla fotocamera negato. Controlla i permessi del browser.'
-        : 'Impossibile avviare la fotocamera: ' + err.message;
-      status.className = 'camera-status error';
-      btn.disabled  = false;
-      btn.textContent = 'Riprova';
-      cameraActive = false;
-    }
-  }
-
-  function stopCamera() {
-    const video   = document.getElementById('camera-video');
-    const idle    = document.getElementById('camera-idle');
-    const overlay = document.getElementById('scan-overlay');
-    const status  = document.getElementById('camera-status');
-    const btn     = document.getElementById('btn-camera-toggle');
-
-    if (codeReader) { try { codeReader.reset(); } catch(e) {} codeReader = null; }
-    if (video.srcObject) { video.srcObject.getTracks().forEach(t => t.stop()); video.srcObject = null; }
-
-    video.style.display   = 'none';
-    overlay.style.display = 'none';
-    idle.style.display    = 'flex';
-    cameraActive = false;
-    btn.disabled  = false;
-    btn.textContent    = 'Attiva fotocamera';
-    status.textContent = 'Fotocamera non attiva';
-    status.className   = 'camera-status';
-  }
-
-  /* ═══════════════════════════════════════════
-     API CASCADE
-  ═══════════════════════════════════════════ */
-
-  /* 1 — Google Books (Aggiornato) */
-  async function searchGoogleBooks(isbn) {
-    const res = await fetch(
-      `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&maxResults=1`,
-      { signal: AbortSignal.timeout(6000) }
-    );
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (!data.items?.length) return null;
-    const info = data.items[0].volumeInfo;
-    return {
-      title:     info.title,
-      author:    (info.authors || []).join(', ') || '—',
-      publisher: info.publisher || '—',
-      year:      info.publishedDate?.substring(0, 4) || '—',
-      cover:     info.imageLinks?.thumbnail || null, // <--- Recupera copertina
-      source:    'Google Books'
-    };
-  }
-
-  /* 2 — Open Library (Aggiornato) */
-  async function searchOpenLibrary(isbn) {
-    const res = await fetch(
-      `https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=data`,
-      { signal: AbortSignal.timeout(8000) }
-    );
-    if (!res.ok) return null;
-    const data = await res.json();
-    const book = data[`ISBN:${isbn}`];
-    if (!book?.title) return null;
-    return {
-      title:     book.title,
-      author:    (book.authors   || []).map(a => a.name).join(', ') || '—',
-      publisher: (book.publishers|| []).map(p => p.name).join(', ') || '—',
-      year:      book.publish_date?.match(/\d{4}/)?.[0] || '—',
-      cover:     book.cover?.medium || null, // <--- Recupera copertina
-      source:    'Open Library'
-    };
-  }
-
-  /* 3 — SBN OPAC via CORS proxy */
-  async function searchSBN(isbn) {
-    const sbnUrl    = `https://opac.sbn.it/opacsbn/opaclib?db=solr_remote&ricerca=SI&resultForward=opac%2Fopen-search.jsp&Text1=${isbn}&Indice1=ISBN&NumRec=1&lang=IT`;
-    const proxyUrl  = `https://api.allorigins.win/get?url=${encodeURIComponent(sbnUrl)}`;
-    const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(12000) });
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (!data.contents) return null;
-
-    const parser = new DOMParser();
-    const doc    = parser.parseFromString(data.contents, 'text/html');
-
-    const titleEl =
-      doc.querySelector('.titoloCard') ||
-      doc.querySelector('.risultatoTitolo') ||
-      doc.querySelector('span.title') ||
-      doc.querySelector('td.td_titolo') ||
-      [...doc.querySelectorAll('td')].find(td => td.className?.includes('titol'));
-
-    if (!titleEl) return null;
-    const title = titleEl.textContent.trim();
-    if (!title) return null;
-
-    const authorEl    = doc.querySelector('.autoreCard')  || doc.querySelector('td.td_autore');
-    const publisherEl = doc.querySelector('.editoreCard') || doc.querySelector('td.td_editore');
-    const yearEl      = doc.querySelector('.annoCard')    || doc.querySelector('td.td_anno');
-
-    return {
-      title,
-      author:    authorEl?.textContent.trim()                      || '—',
-      publisher: publisherEl?.textContent.trim()                   || '—',
-      year:      yearEl?.textContent.trim().match(/\d{4}/)?.[0]    || '—',
-      source:    'SBN'
-    };
-  }
-
-  /* ── Loading UI ── */
-  const STEPS = [
-    { label: 'Google Books' },
-    { label: 'Open Library' },
-    { label: 'Catalogo SBN' }
-  ];
-
-  function setSearchLoading(step) {
-    const btn = document.getElementById('btn-search');
-    const input = document.getElementById('isbn-input');
-
-    if (step === null) {
-      btn.disabled   = false;
-      btn.textContent = 'Cerca libro';
-      input.disabled = false;
-      const el = document.getElementById('search-status');
-      if (el) el.remove();
-      return;
-    }
-
-    btn.disabled   = true;
-    btn.textContent = 'Ricerca in corso…';
-    input.disabled = true;
-
-    let el = document.getElementById('search-status');
-    if (!el) {
-      el = document.createElement('div');
-      el.id = 'search-status';
-      el.style.cssText = 'padding: 0.75rem 0 0;';
-      btn.parentElement.insertAdjacentElement('afterend', el);
-    }
-
-    el.innerHTML = `<div class="source-steps">${
-      STEPS.map((s, i) => {
-        const done   = i < step;
-        const active = i === step;
-        return `<div class="source-step ${done ? 'done' : active ? 'active' : ''}">
-          <div class="dot"></div>
-          <span>${s.label}</span>
-          ${active ? '<div class="spinner" style="margin-left:4px;"></div>' : ''}
-          ${done   ? '<span class="check">✓</span>' : ''}
-        </div>`;
-      }).join('')
-    }</div>`;
-  }
-
-  /* ── Cascade search ── */
-  async function searchISBN() {
-    const raw = document.getElementById('isbn-input').value.trim();
-    if (!raw) return showToast('Inserisci un codice ISBN');
-    const isbn = raw.replace(/[^0-9X]/gi, '');
-    if (isbn.length !== 10 && isbn.length !== 13) return showToast('ISBN non valido (10 o 13 cifre)');
-
-    let result = null;
-
-    try { setSearchLoading(0); result = await searchGoogleBooks(isbn); } catch(e) {}
-    if (!result) { try { setSearchLoading(1); result = await searchOpenLibrary(isbn); } catch(e) {} }
-    if (!result) { try { setSearchLoading(2); result = await searchSBN(isbn);         } catch(e) {} }
-
-    setSearchLoading(null);
-
-    if (!result) return showToast('Nessun risultato trovato nelle fonti disponibili');
-
-    state.currentBook = { ...result, isbn: raw };
-    renderResult(state.currentBook);
-  }
-
-  /* ── Result render ── */
-  function renderResult(book) {
-    document.getElementById('r-title').textContent     = book.title;
-    document.getElementById('r-author').textContent    = book.author;
-    document.getElementById('r-year').textContent      = book.year;
-    document.getElementById('r-publisher').textContent = book.publisher;
-    document.getElementById('r-isbn').textContent      = book.isbn;
-    document.getElementById('r-notes').value           = '';
-    document.getElementById('r-location-custom').value = '';
-
-    const sourceEl = document.getElementById('r-source');
-    const sourceMap = { 'Google Books': 'source-google', 'Open Library': 'source-openlibrary', 'SBN': 'source-sbn' };
-    if (book.source) {
-      sourceEl.textContent = book.source;
-      sourceEl.className   = 'tag ' + (sourceMap[book.source] || '');
-      sourceEl.style.display = '';
-    } else {
-      sourceEl.style.display = 'none';
-    }
-
-    populateLocationSelect();
-    populateCategorySelects();
-    const section = document.getElementById('result-section');
-    section.classList.add('visible');
-    section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }
-
-  function populateCategorySelects() {
-    const catSel = document.getElementById('r-category');
-    catSel.innerHTML = '<option value="">Scegli categoria...</option>' + 
-      DEFAULT_CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('');
-
-    const subSel = document.getElementById('r-subcategory');
-    subSel.innerHTML = '<option value="">Nessuna sottocategoria</option>';
-  }
-
-  function dismissResult() {
-    document.getElementById('result-section').classList.remove('visible');
-    document.getElementById('isbn-input').value = '';
-    state.currentBook = null;
-  }
-
-  /* ── Add to collection ── */
-  function addToCollection() {
-      if (!state.currentBook) return;
-
-      const location = document.getElementById('r-location').value || 'Non specificato';
-      const category = document.getElementById('r-category').value;
-      const subcategory = document.getElementById('r-subcategory').value || '';
-
-      if (!category) {
-          showToast("Seleziona una categoria");
-          return;
-      }
-
-      const status = document.getElementById('r-status').value;
-      const notes  = document.getElementById('r-notes').value.trim();
-
-      const entry = { 
-          ...state.currentBook, 
-          location, 
-          category, 
-          subcategory, 
-          status, 
-          notes, 
-          id: Date.now() 
-      };
-      
-      state.collection.unshift(entry);
-      save();
-      
-      // Torna alla prima pagina per vedere il nuovo libro
-      state.currentPage = 1; 
-      renderCollection();
-      
-      // Reset e chiusura
-      document.getElementById('subcat-container').style.display = 'none';
-      dismissResult(); 
-      showToast('Libro aggiunto con successo');
-  }
-
-  // Funzione di chiusura cliccando fuori
-  function closeQuickAddOutside(e) {
-      if (e.target.id === 'quick-add-modal') closeQuickAdd();
-  }
-
-  /* ── Collection render ── */
-    function renderCollection() {
-    const list = document.getElementById('collection-list');
-    const empty = document.getElementById('empty-state');
-    
-    if (state.collection.length === 0) {
-      list.innerHTML = '';
-      empty.style.display = 'block';
-      // Rimuoviamo i controlli se la collezione è vuota
-      const oldControls = document.getElementById('pagination-controls');
-      if (oldControls) oldControls.innerHTML = '';
-      return;
-    }
-    
-    empty.style.display = 'none';
-
-    // Calcolo indici per paginazione
-    const totalPages = Math.ceil(state.collection.length / state.booksPerPage);
-    
-    // Sicurezza: se elimini libri e la pagina corrente diventa inesistente, torna all'ultima valida
-    if (state.currentPage > totalPages) state.currentPage = totalPages || 1;
-
-    const startIndex = (state.currentPage - 1) * state.booksPerPage;
-    const endIndex = startIndex + state.booksPerPage;
-    const paginatedBooks = state.collection.slice(startIndex, endIndex);
-
-    // Mappatura dei libri con supporto a Copertine e Categorie
-    list.innerHTML = paginatedBooks.map(book => {
-      const statusClass = { 'letto': 'status-read', 'in-corso': 'status-reading', 'da-leggere': 'status-wish' };
-      
-      // Mostra copertina se esiste, altrimenti il dorso colorato
-      const coverHtml = book.cover 
-        ? `<img src="${book.cover}" class="book-cover-img" alt="Copertina" onerror="this.style.display='none'">`
-        : `<div class="book-spine">${escHtml(book.title)}</div>`;
-
-      return `
-        <div class="book-item">
-          ${coverHtml}
-          <div class="book-info">
-            <div class="book-item-title">${escHtml(book.title)}</div>
-            <div class="book-item-meta">${escHtml(book.author)} · ${escHtml(book.year)}</div>
-            <div class="book-item-footer">
-              <span class="status-pill ${statusClass[book.status] || ''}">${escHtml(book.status)}</span>
-              <span class="tag">${escHtml(book.category)}</span>
-              ${book.subcategory ? `<span class="location-pill">/ ${escHtml(book.subcategory)}</span>` : ''}
-              <span class="location-pill">📍 ${escHtml(book.location)}</span>
-            </div>
-          </div>
-          <button class="btn-delete" onclick="deleteBook(${book.id})" title="Rimuovi">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/></svg>
-          </button>
-        </div>
-      `;
-    }).join('');
-
-    renderPaginationControls(totalPages);
-  }
-
-  function renderPaginationControls(totalPages) {
-    let container = document.getElementById('pagination-controls');
-    
-    // Se il container non esiste, lo creiamo sotto la lista
-    if (!container) {
-      container = document.createElement('div');
-      container.id = 'pagination-controls';
-      container.className = 'pagination-flex';
-      document.getElementById('collection-section').appendChild(container);
-    }
-
-    // Se c'è solo una pagina, svuota il contenitore
-    if (totalPages <= 1) {
-      container.innerHTML = '';
-      return;
-    }
-
-    container.innerHTML = `
-      <button class="btn-page" ${state.currentPage === 1 ? 'disabled' : ''} onclick="changePage(-1)">
-        &larr; Prec
-      </button>
-      <div class="page-indicator">
-        Pagina <strong>${state.currentPage}</strong> di ${totalPages}
-      </div>
-      <button class="btn-page" ${state.currentPage === totalPages ? 'disabled' : ''} onclick="changePage(1)">
-        Succ &rarr;
-      </button>
-    `;
-  }
-
-  function changePage(step) {
-    state.currentPage += step;
-    renderCollection();
-    // Torna in cima alla sezione collezione per agevolare la lettura dei nuovi risultati
-    document.getElementById('collection-section').scrollIntoView({ behavior: 'smooth' });
-  }
-
-  function deleteBook(id) {
-    state.collection = state.collection.filter(b => b.id !== id);
-    save();
-    renderCollection();
-    showToast('Libro rimosso');
-  }
-
-  /* ── Tabs ── */
-  function switchTab(tab) {
-    document.getElementById('panel-camera').style.display = tab === 'camera' ? 'block' : 'none';
-    document.getElementById('panel-manual').style.display = tab === 'manual' ? 'block' : 'none';
-    document.getElementById('tab-camera').classList.toggle('active', tab === 'camera');
-    document.getElementById('tab-manual').classList.toggle('active', tab === 'manual');
-    if (tab === 'manual' && cameraActive) stopCamera();
-  }
-
-  /* ── Locations ── */
-  function populateLocationSelect() {
-    const sel = document.getElementById('r-location');
-    sel.innerHTML = '<option value="">Seleziona un luogo…</option>' +
-      state.locations.map(l => `<option value="${escHtml(l)}">${escHtml(l)}</option>`).join('');
-  }
-
-  function renderSettingsLocations() {
-    document.getElementById('settings-location-list').innerHTML =
-      state.locations.map((l, i) => `
-        <div class="location-item">
-          <div class="loc-dot"></div>
-          <span>${escHtml(l)}</span>
-          <button class="btn-delete" onclick="removeLocation(${i})" title="Rimuovi">
-            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 4l12 12M16 4L4 16"/></svg>
-          </button>
-        </div>`
-      ).join('');
-  }
-
-  function addLocation() {
-    const input = document.getElementById('new-location-input');
-    const val   = input.value.trim();
-    if (!val) return;
-    if (state.locations.includes(val)) return showToast('Luogo già presente');
-    state.locations.push(val);
-    save();
-    renderSettingsLocations();
-    input.value = '';
-  }
-
-  function removeLocation(i) {
-    state.locations.splice(i, 1);
-    save();
-    renderSettingsLocations();
-  }
-
-  /* ── Settings modal ── */
-  function openSettings() {
-    renderSettingsLocations();
-    document.getElementById('settings-modal').classList.add('open');
-  }
-  function closeSettings() { document.getElementById('settings-modal').classList.remove('open'); }
-  function closeSettingsOutside(e) { if (e.target === document.getElementById('settings-modal')) closeSettings(); }
-
-  /* ── Toast ── */
-  let toastTimer;
-  function showToast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
-  }
-
-  /* ── Utils ── */
-  function escHtml(s) {
-    return String(s || '').replace(/[&<>"']/g, c =>
-      ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
-  }
-
-  /* ── Init ── */
-  renderCollection();
-
-  function handleCategoryChange() {
-    const category = document.getElementById('r-category').value;
-    const container = document.getElementById('subcat-container');
-    const subSelect = document.getElementById('r-subcategory');
-    
-    if (!category) {
-      container.style.display = 'none';
-      return;
-    }
-
-    // Mostra il contenitore
-    container.style.display = 'block';
-
-    // Filtra le sottocategorie in base alla categoria scelta
-    const relevantSubs = state.subcategories[category] || [];
-    
-    subSelect.innerHTML = '<option value="">Nessuna sottocategoria</option>' +
-      relevantSubs.map(s => `<option value="${escHtml(s)}">${escHtml(s)}</option>`).join('');
-      
-    // Reset del campo di testo personalizzato
-    document.getElementById('r-subcategory-custom').value = '';
-  }
-</script>
 </body>
 </html>
