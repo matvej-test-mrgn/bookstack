@@ -366,8 +366,18 @@
   .book-item:last-child { border-bottom: none; padding-bottom: 0; }
   .book-item:first-child { padding-top: 0; }
 
+  .book-cover-img {
+    width: 45px; /* Leggermente più largo del dorso */
+    height: 65px;
+    border-radius: 4px;
+    object-fit: cover;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
   .book-spine {
-    width: 36px; height: 50px; border-radius: 4px;
+    width: 45px; height: 65px; border-radius: 4px;
     background: var(--accent-light); display: flex; align-items: center; justify-content: center;
     flex-shrink: 0; font-family: var(--font-brand); font-style: italic; font-size: 0.6875rem;
     color: var(--accent); writing-mode: vertical-rl; overflow: hidden; padding: 4px 0;
@@ -738,7 +748,7 @@
      API CASCADE
   ═══════════════════════════════════════════ */
 
-  /* 1 — Google Books */
+  /* 1 — Google Books (Aggiornato) */
   async function searchGoogleBooks(isbn) {
     const res = await fetch(
       `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&maxResults=1`,
@@ -748,17 +758,17 @@
     const data = await res.json();
     if (!data.items?.length) return null;
     const info = data.items[0].volumeInfo;
-    if (!info.title) return null;
     return {
       title:     info.title,
       author:    (info.authors || []).join(', ') || '—',
       publisher: info.publisher || '—',
       year:      info.publishedDate?.substring(0, 4) || '—',
+      cover:     info.imageLinks?.thumbnail || null, // <--- Recupera copertina
       source:    'Google Books'
     };
   }
 
-  /* 2 — Open Library */
+  /* 2 — Open Library (Aggiornato) */
   async function searchOpenLibrary(isbn) {
     const res = await fetch(
       `https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=data`,
@@ -773,6 +783,7 @@
       author:    (book.authors   || []).map(a => a.name).join(', ') || '—',
       publisher: (book.publishers|| []).map(p => p.name).join(', ') || '—',
       year:      book.publish_date?.match(/\d{4}/)?.[0] || '—',
+      cover:     book.cover?.medium || null, // <--- Recupera copertina
       source:    'Open Library'
     };
   }
@@ -984,20 +995,27 @@
 
     const deleteSVG = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 4l12 12M16 4L4 16"/></svg>`;
 
-    list.innerHTML = state.collection.map(book => `
-      <div class="book-item">
-        <div class="book-spine">${escHtml(book.title)}</div>
-        <div class="book-info">
-          <div class="book-item-title">${escHtml(book.title)}</div>
-          <div class="book-item-meta">${escHtml(book.author)} · ${escHtml(book.year)}</div>
-          <div class="book-item-footer">
-            <span class="status-pill ${statusClass[book.status] || ''}">${escHtml(book.status)}</span>
-            <span class="location-pill">${escHtml(book.location)}</span>
+    list.innerHTML = state.collection.map(book => {
+      const coverHtml = book.cover 
+        ? `<img src="${book.cover}" class="book-cover-img" alt="Copertina">`
+        : `<div class="book-spine">${escHtml(book.title)}</div>`;
+
+      return `
+        <div class="book-item">
+          ${coverHtml}
+          <div class="book-info">
+            <div class="book-item-title">${escHtml(book.title)}</div>
+            <div class="book-item-meta">${escHtml(book.author)} · ${escHtml(book.year)}</div>
+            <div class="book-item-footer">
+              <span class="status-pill ${statusClass[book.status] || ''}">${escHtml(book.status)}</span>
+              <span class="tag">${escHtml(book.category)}</span>
+              <span class="location-pill">📍 ${escHtml(book.location)}</span>
+            </div>
           </div>
+          <button class="btn-delete" onclick="deleteBook(${book.id})" title="Rimuovi">${deleteSVG}</button>
         </div>
-        <button class="btn-delete" onclick="deleteBook(${book.id})" title="Rimuovi">${deleteSVG}</button>
-      </div>
-    `).join('');
+      `;
+    }).join('');
   }
 
   function deleteBook(id) {
