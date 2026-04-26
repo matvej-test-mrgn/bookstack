@@ -508,3 +508,34 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
   color: var(--red);
   text-decoration-color: var(--red);
 }
+
+/* ── New entry toggle ── */
+.new-entry-toggle-wrap {
+  margin-top: 0.875rem;
+  text-align: center;
+}
+
+.new-entry-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.8125rem;
+  color: var(--text-3);
+  cursor: pointer;
+  transition: color 0.15s;
+  user-select: none;
+}
+.new-entry-toggle:hover { color: var(--accent); }
+
+.new-entry-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 1rem 0;
+}
+
+.required-mark {
+  color: var(--red);
+  font-size: 0.75rem;
+  margin-left: 2px;
+  text-transform: none;
+}

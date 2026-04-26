@@ -76,6 +76,71 @@
       <div style="margin-top:0.875rem;">
         <button class="btn-primary" id="btn-search" onclick="searchISBN()">Cerca libro</button>
       </div>
+      <div class="new-entry-toggle-wrap">
+        <span class="new-entry-toggle" onclick="toggleNewEntry()">
+          <svg id="new-entry-chevron" width="11" height="11" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform 0.2s;">
+            <path d="M5 8l5 5 5-5"/>
+          </svg>
+          Crea una nuova voce…
+        </span>
+      </div>
+
+      <!-- New entry form (collapsed by default) -->
+      <div id="new-entry-form" style="display:none;">
+        <div class="new-entry-divider"></div>
+        <div class="form-grid">
+          <div class="input-group full">
+            <label for="ne-title">Titolo <span class="required-mark">*</span></label>
+            <input type="text" id="ne-title" placeholder="Titolo del libro"/>
+          </div>
+          <div class="input-group full">
+            <label for="ne-author">Autore</label>
+            <input type="text" id="ne-author" placeholder="Nome Cognome"/>
+          </div>
+          <div class="input-group">
+            <label for="ne-publisher">Editore</label>
+            <input type="text" id="ne-publisher" placeholder="Es. Einaudi"/>
+          </div>
+          <div class="input-group">
+            <label for="ne-year">Anno</label>
+            <input type="text" id="ne-year" placeholder="Es. 1984" maxlength="4" inputmode="numeric"/>
+          </div>
+          <div class="input-group full">
+            <label for="ne-isbn">ISBN</label>
+            <input type="text" id="ne-isbn" placeholder="Es. 9788807880933" maxlength="17" inputmode="numeric"/>
+          </div>
+          <div class="input-group full">
+            <label for="ne-cover">URL copertina</label>
+            <input type="text" id="ne-cover" placeholder="https://…"/>
+          </div>
+          <div class="input-group full">
+            <label for="ne-location">Luogo</label>
+            <div class="select-wrap">
+              <select id="ne-location"></select>
+            </div>
+            <input type="text" id="ne-location-custom" placeholder="Oppure scrivi un luogo…" style="margin-top:0.375rem;"/>
+          </div>
+          <div class="input-group full">
+            <label for="ne-status">Stato di lettura</label>
+            <div class="select-wrap">
+              <select id="ne-status">
+                <option value="Da leggere">Da leggere</option>
+                <option value="In lettura">In lettura</option>
+                <option value="Letto">Letto</option>
+                <option value="Sospeso">Sospeso</option>
+              </select>
+            </div>
+          </div>
+          <div class="input-group full">
+            <label for="ne-notes">Note</label>
+            <textarea id="ne-notes" placeholder="Annotazioni personali…"></textarea>
+          </div>
+        </div>
+        <div style="margin-top:0.875rem; display:flex; flex-direction:column; gap:0.5rem;">
+          <button class="btn-primary" onclick="addManualEntry()">Aggiungi alla collezione</button>
+          <button class="btn-secondary" onclick="toggleNewEntry(true)">Annulla</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -215,7 +280,7 @@
     </div>
     <p id="confirm-message" class="confirm-message"></p>
     <div class="confirm-actions">
-      <button class="btn-primary btn-danger" id="confirm-ok">Conferma</button>
+      <button class="btn-primary btn-danger" id="confirm-ok" onclick="confirmAction()">Conferma</button>
       <button class="btn-secondary" onclick="closeConfirm()">Annulla</button>
     </div>
   </div>

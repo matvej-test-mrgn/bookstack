@@ -366,7 +366,7 @@ function confirmDeleteAll() {
    CSV export / import
    ════════════════════════════════════════════ */
 
-const CSV_HEADERS = ['id','isbn','title','author','publisher','year','source','location','status','notes','dateAdded','coverUrl'];
+const CSV_HEADERS = ['id','coverUrl','author','title','year','publisher','isbn','source','location','status','notes','dateAdded'];
 
 function exportCSV() {
   if (state.collection.length === 0) return showToast('Nessun libro da esportare');
@@ -617,6 +617,84 @@ async function uploadToDrive(token) {
   } catch(err) {
     showToast('Errore Drive: ' + err.message);
   }
+}
+
+/* ════════════════════════════════════════════
+   Manual entry (new voice)
+   ════════════════════════════════════════════ */
+
+let newEntryOpen = false;
+
+function toggleNewEntry(forceClose = false) {
+  const form    = document.getElementById('new-entry-form');
+  const chevron = document.getElementById('new-entry-chevron');
+
+  if (forceClose || newEntryOpen) {
+    newEntryOpen = false;
+    form.style.display = 'none';
+    chevron.style.transform = 'rotate(0deg)';
+    clearNewEntryForm();
+  } else {
+    newEntryOpen = true;
+    form.style.display = 'block';
+    chevron.style.transform = 'rotate(180deg)';
+    populateNewEntrySelect();
+    /* Scroll the form into view smoothly */
+    setTimeout(() => form.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+  }
+}
+
+function clearNewEntryForm() {
+  ['ne-title','ne-author','ne-publisher','ne-year','ne-isbn','ne-cover','ne-location-custom','ne-notes']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  const statusEl = document.getElementById('ne-status');
+  if (statusEl) statusEl.value = 'Da leggere';
+}
+
+function populateNewEntrySelect() {
+  const sel = document.getElementById('ne-location');
+  if (!sel) return;
+  sel.innerHTML =
+    '<option value="">Seleziona un luogo…</option>' +
+    state.locations.map(l => `<option value="${escHtml(l)}">${escHtml(l)}</option>`).join('');
+}
+
+function addManualEntry() {
+  const title = document.getElementById('ne-title').value.trim();
+  if (!title) {
+    /* Highlight the required field */
+    const titleInput = document.getElementById('ne-title');
+    titleInput.style.borderColor = 'var(--red)';
+    titleInput.focus();
+    setTimeout(() => titleInput.style.borderColor = '', 2000);
+    return showToast('Il titolo è obbligatorio');
+  }
+
+  const custom   = document.getElementById('ne-location-custom').value.trim();
+  const select   = document.getElementById('ne-location').value;
+  const location = custom || select || 'Non specificato';
+
+  const entry = {
+    id:        Date.now(),
+    isbn:      document.getElementById('ne-isbn').value.trim()        || '—',
+    title,
+    author:    document.getElementById('ne-author').value.trim()      || '—',
+    publisher: document.getElementById('ne-publisher').value.trim()   || '—',
+    year:      document.getElementById('ne-year').value.trim()        || '—',
+    source:    '',   /* no API — left empty */
+    location,
+    status:    document.getElementById('ne-status').value,
+    notes:     document.getElementById('ne-notes').value.trim()       || '',
+    dateAdded: new Date().toLocaleDateString('it-IT'),
+    coverUrl:  document.getElementById('ne-cover').value.trim()       || null,
+  };
+
+  state.collection.unshift(entry);
+  state.page = 0;
+  save();
+  renderCollection();
+  toggleNewEntry(true);   /* close and reset form */
+  showToast(`"${title}" aggiunto alla collezione`);
 }
 
 /* ── Init ── */
