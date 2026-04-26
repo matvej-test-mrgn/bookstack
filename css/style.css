@@ -109,6 +109,39 @@ header {
 .btn-delete:hover { color: var(--red); }
 .btn-delete svg   { width: 14px; height: 14px; }
 
+/* ── Book action buttons (edit + delete pair) ── */
+.book-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.btn-action {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-3);
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: background 0.12s, color 0.12s;
+  line-height: 1;
+}
+.btn-action:hover               { background: var(--surface-2); }
+.btn-action.btn-delete:hover    { color: var(--red); background: #fdecea; }
+.btn-action.btn-edit:hover      { color: var(--accent); background: var(--accent-light); }
+.btn-action.btn-edit:hover img  { opacity: 1 !important; }
+.btn-action svg                 { width: 14px; height: 14px; }
+
+/* ── Tall modal (edit form) ── */
+.modal-tall {
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
 /* ── Main ── */
 main {
   width: 100%;
