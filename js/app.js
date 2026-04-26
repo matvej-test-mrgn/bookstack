@@ -94,7 +94,7 @@ var EMPTY_HTML = '<div class="collection-empty">'
   + '<path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>'
   + '<path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>'
   + '</svg>'
-  + 'Nessun libro presente.<br>Scansiona o inserisci un ISBN per iniziare.'
+  + 'Nessun libro presente.<br>Scansiona o inserisci un ISBN per aggiungere libri al catalogo.'
   + '</div>';
 
 var EMPTY_FILTERED_HTML = '<div class="collection-empty">'
