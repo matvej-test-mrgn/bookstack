@@ -210,14 +210,50 @@
       </div>
     </div>
 
-    <div class="card" id="collection-list">
-      <div class="collection-empty" id="collection-empty">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>
-          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
+    <!-- Search bar -->
+    <div class="search-wrap">
+      <svg class="search-icon" width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="9" cy="9" r="6"/><path d="M17 17l-3.5-3.5"/>
+      </svg>
+      <input
+        type="text"
+        id="collection-search"
+        class="search-input"
+        placeholder="Cerca per titolo, autore, ISBN, luogo…"
+        oninput="onSearchInput(this.value)"
+      />
+      <button id="search-clear-btn" class="search-clear" onclick="clearSearch()" style="display:none;" title="Cancella ricerca">
+        <svg width="12" height="12" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M4 4l12 12M16 4L4 16"/>
         </svg>
-        Nessun libro presente.<br>Scansiona o inserisci un ISBN per aggiungere libri al catalogo.
+      </button>
+    </div>
+
+    <!-- Filter + Sort row -->
+    <div class="filter-sort-row">
+      <button class="btn-filter" onclick="openFilterModal()" title="Filtra">
+        <img src="svg/filter.svg" width="14" height="14" alt="Filtra">
+        Filtri
+        <span id="filter-badge" class="filter-badge" style="display:none;">0</span>
+      </button>
+
+      <div class="sort-wrap">
+        <label for="sort-select" class="sort-label">Ordina per</label>
+        <div class="select-wrap select-wrap-inline">
+          <select id="sort-select" onchange="onSortChange(this.value)">
+            <option value="date-desc">Data aggiunta (più recente)</option>
+            <option value="date-asc">Data aggiunta (meno recente)</option>
+            <option value="title-asc">Titolo (A–Z)</option>
+            <option value="author-asc">Autore (A–Z)</option>
+            <option value="year-desc">Anno (più recente)</option>
+            <option value="year-asc">Anno (meno recente)</option>
+          </select>
+        </div>
       </div>
+    </div>
+
+    <div class="card" id="collection-list">
+      <!-- rendered by renderCollection() -->
     </div>
 
     <!-- Pagination -->

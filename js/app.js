@@ -89,7 +89,63 @@ function addToCollection() {
    Collection rendering
    ════════════════════════════════════════════ */
 
-var STATUS_CLASS = { 'Letto': 'status-letto', 'In lettura': 'status-in-lettura', 'Da leggere': 'status-da-leggere', 'Sospeso': 'status-sospeso' };
+var EMPTY_HTML = '<div class="collection-empty">'
+  + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" style="display:block;width:32px;height:32px;opacity:0.3;margin:0 auto 0.75rem;">'
+  + '<path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>'
+  + '<path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>'
+  + '</svg>'
+  + 'Nessun libro presente.<br>Scansiona o inserisci un ISBN per aggiungere libri al catalogo.'
+  + '</div>';
+
+var EMPTY_FILTERED_HTML = '<div class="collection-empty">'
+  + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" style="display:block;width:32px;height:32px;opacity:0.3;margin:0 auto 0.75rem;">'
+  + '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/>'
+  + '</svg>'
+  + 'Nessun risultato trovato.<br>Prova a modificare la ricerca o i filtri attivi.'
+  + '</div>';
+
+function renderCollection() {
+  var list       = document.getElementById('collection-list');
+  var pagination = document.getElementById('pagination');
+
+  var displayed = getDisplayCollection();
+  var totalAll  = state.collection.length;
+  var total     = displayed.length;
+
+  document.getElementById('collection-count').textContent = totalAll;
+
+  /* Empty collection */
+  if (totalAll === 0) {
+    list.innerHTML           = EMPTY_HTML;
+    pagination.style.display = 'none';
+    return;
+  }
+
+  /* Collection has items but filters/search yield nothing */
+  if (total === 0) {
+    list.innerHTML           = EMPTY_FILTERED_HTML;
+    pagination.style.display = 'none';
+    return;
+  }
+
+  var totalPages = Math.ceil(total / state.perPage);
+  state.page     = Math.min(state.page, totalPages - 1);
+
+  var start = state.page * state.perPage;
+  var end   = Math.min(start + state.perPage, total);
+  var slice = displayed.slice(start, end);
+
+  list.innerHTML = slice.map(bookItemHTML).join('');
+
+  if (totalPages > 1) {
+    pagination.style.display = 'flex';
+    document.getElementById('page-info').textContent  = (state.page + 1) + ' / ' + totalPages;
+    document.getElementById('page-prev').disabled     = state.page === 0;
+    document.getElementById('page-next').disabled     = state.page === totalPages - 1;
+  } else {
+    pagination.style.display = 'none';
+  }
+}
 
 var EDIT_SVG = '<img src="svg/edit.svg" width="14" height="14" alt="Modifica" style="display:block;opacity:0.55;">';
 
@@ -129,8 +185,9 @@ function renderCollection() {
   }
 }
 
-function bookItemHTML(book) {
-  var coverHTML = book.coverUrl
+var STATUS_CLASS = { 'Letto': 'status-letto', 'In lettura': 'status-in-lettura', 'Da leggere': 'status-da-leggere', 'Sospeso': 'status-sospeso' };
+
+function bookItemHTML(book) {  var coverHTML = book.coverUrl
     ? '<img class="book-cover-img" src="' + escHtml(book.coverUrl) + '" alt="Copertina" loading="lazy" onerror="this.replaceWith(buildSpine(' + JSON.stringify(escHtml(book.title)) + '))">'
     : '<div class="book-spine">' + escHtml(book.title) + '</div>';
 
