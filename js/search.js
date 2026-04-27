@@ -1,89 +1,97 @@
 /* ════════════════════════════════════════════
    BookStack — search.js
-   Text search, filter state, sorting.
-   Exposes getDisplayCollection() used by
-   renderCollection() in app.js.
+   Loaded after app.js. Uses state, escHtml,
+   renderCollection defined in app.js.
    ════════════════════════════════════════════ */
 
 var searchState = {
   query:   '',
-  sort:    'date-desc',   /* default: most recently added first */
-  filters: {
-    status:   [],   /* empty = all statuses */
-    location: []    /* empty = all locations */
-  }
+  sortBy:  'dateAdded_desc',
+  filters: { status: [], location: [] }
 };
 
-var SEARCH_FIELDS = ['title', 'author', 'year', 'publisher', 'isbn', 'location'];
+/* ── Parse Italian date dd/mm/yyyy to timestamp ── */
+function parseDateIt(s) {
+  if (!s) return 0;
+  var p = String(s).split('/');
+  if (p.length === 3) return new Date(p[2], p[1] - 1, p[0]).getTime();
+  return new Date(s).getTime() || 0;
+}
 
-/* ── Returns a filtered + sorted copy of state.collection ── */
+/* ════════════════════════════════════════════
+   Returns filtered + sorted collection array.
+   Called by renderCollection() in app.js.
+   ════════════════════════════════════════════ */
 function getDisplayCollection() {
   var col = state.collection.slice();
 
-  /* 1 — Text search across key fields */
+  /* Free-text search */
   var q = searchState.query.trim().toLowerCase();
   if (q) {
     col = col.filter(function(b) {
-      return SEARCH_FIELDS.some(function(f) {
-        return String(b[f] || '').toLowerCase().indexOf(q) !== -1;
+      return ['author','title','year','publisher','isbn','location'].some(function(k) {
+        return String(b[k] || '').toLowerCase().indexOf(q) !== -1;
       });
     });
   }
 
-  /* 2 — Status filter */
+  /* Status filter */
   if (searchState.filters.status.length > 0) {
     col = col.filter(function(b) {
       return searchState.filters.status.indexOf(b.status) !== -1;
     });
   }
 
-  /* 3 — Location filter */
+  /* Location filter */
   if (searchState.filters.location.length > 0) {
     col = col.filter(function(b) {
       return searchState.filters.location.indexOf(b.location) !== -1;
     });
   }
 
-  /* 4 — Sort */
+  /* Sort */
   col.sort(function(a, b) {
-    switch (searchState.sort) {
-      case 'date-desc':  return b.id - a.id;
-      case 'date-asc':   return a.id - b.id;
-      case 'title-asc':  return String(a.title  || '').localeCompare(String(b.title  || ''), 'it');
-      case 'author-asc': return String(a.author || '').localeCompare(String(b.author || ''), 'it');
-      case 'year-desc':  return (parseInt(b.year) || 0) - (parseInt(a.year) || 0);
-      case 'year-asc':   return (parseInt(a.year) || 0) - (parseInt(b.year) || 0);
-      default:           return b.id - a.id;
+    switch (searchState.sortBy) {
+      case 'dateAdded_desc': return parseDateIt(b.dateAdded) - parseDateIt(a.dateAdded);
+      case 'dateAdded_asc':  return parseDateIt(a.dateAdded) - parseDateIt(b.dateAdded);
+      case 'title_asc':      return String(a.title||'').localeCompare(String(b.title||''),'it');
+      case 'author_asc':     return String(a.author||'').localeCompare(String(b.author||''),'it');
+      case 'year_desc':      return (parseInt(b.year,10)||0) - (parseInt(a.year,10)||0);
+      case 'year_asc':       return (parseInt(a.year,10)||0) - (parseInt(b.year,10)||0);
+      default:               return 0;
     }
   });
 
   return col;
 }
 
-/* ── Called when the user types in the search bar ── */
+/* ════════════════════════════════════════════
+   Search
+   ════════════════════════════════════════════ */
 function onSearchInput(value) {
   searchState.query = value;
   state.page = 0;
   renderCollection();
-  updateSearchClearBtn();
+  /* Show/hide clear button */
+  var clr = document.getElementById('search-clear');
+  if (clr) clr.style.display = value.length > 0 ? 'flex' : 'none';
 }
 
 function clearSearch() {
   searchState.query = '';
-  document.getElementById('collection-search').value = '';
+  var inp = document.getElementById('search-input');
+  if (inp) inp.value = '';
+  var clr = document.getElementById('search-clear');
+  if (clr) clr.style.display = 'none';
   state.page = 0;
   renderCollection();
-  updateSearchClearBtn();
 }
 
-function updateSearchClearBtn() {
-  var btn = document.getElementById('search-clear-btn');
-  if (btn) btn.style.display = searchState.query ? 'flex' : 'none';
-}
-
-/* ── Sort ── */
+/* ════════════════════════════════════════════
+   Sort
+   ════════════════════════════════════════════ */
 function onSortChange(value) {
-  searchState.sort = value;
+  searchState.sortBy = value;
   state.page = 0;
   renderCollection();
 }
@@ -91,7 +99,6 @@ function onSortChange(value) {
 /* ════════════════════════════════════════════
    Filter modal
    ════════════════════════════════════════════ */
-
 function openFilterModal() {
   renderFilterModal();
   document.getElementById('filter-modal').classList.add('open');
@@ -105,88 +112,54 @@ function closeFilterOutside(e) {
   if (e.target === document.getElementById('filter-modal')) closeFilterModal();
 }
 
-/* Collect unique locations from current collection */
-function uniqueLocations() {
-  var seen = {}, result = [];
-  state.collection.forEach(function(b) {
-    if (b.location && !seen[b.location]) { seen[b.location] = true; result.push(b.location); }
-  });
-  return result.sort();
-}
-
 function renderFilterModal() {
-  var statuses  = ['Letto', 'In lettura', 'Da leggere', 'Sospeso'];
-  var locations = uniqueLocations();
+  var STATUSES = ['Letto','In lettura','Da leggere','Sospeso'];
 
-  var html = '';
+  document.getElementById('filter-status-list').innerHTML = STATUSES.map(function(s) {
+    var chk = searchState.filters.status.indexOf(s) !== -1 ? ' checked' : '';
+    return '<label class="filter-check"><input type="checkbox" value="' + escHtml(s) + '"' + chk
+      + ' onchange="toggleFilter(\'status\',this.value,this.checked)"><span>' + escHtml(s) + '</span></label>';
+  }).join('');
 
-  /* Active filter count badge */
-  var activeCount = searchState.filters.status.length + searchState.filters.location.length;
-
-  /* Status checkboxes */
-  html += '<div class="filter-group"><div class="filter-group-label">Stato di lettura</div><div class="filter-options">';
-  statuses.forEach(function(s) {
-    var checked = searchState.filters.status.indexOf(s) !== -1 ? 'checked' : '';
-    html += '<label class="filter-check"><input type="checkbox" value="' + escHtml(s) + '" '
-          + checked + ' onchange="toggleFilterStatus(this.value, this.checked)"><span>' + escHtml(s) + '</span></label>';
+  var locs = [];
+  state.collection.forEach(function(b) {
+    if (b.location && locs.indexOf(b.location) === -1) locs.push(b.location);
   });
-  html += '</div></div>';
+  locs.sort(function(a,b){ return a.localeCompare(b,'it'); });
 
-  /* Location checkboxes — only if there are locations */
-  if (locations.length > 0) {
-    html += '<div class="filter-group"><div class="filter-group-label">Luogo</div><div class="filter-options">';
-    locations.forEach(function(l) {
-      var checked = searchState.filters.location.indexOf(l) !== -1 ? 'checked' : '';
-      html += '<label class="filter-check"><input type="checkbox" value="' + escHtml(l) + '" '
-            + checked + ' onchange="toggleFilterLocation(this.value, this.checked)"><span>' + escHtml(l) + '</span></label>';
-    });
-    html += '</div></div>';
-  }
+  document.getElementById('filter-location-list').innerHTML = locs.length
+    ? locs.map(function(l) {
+        var chk = searchState.filters.location.indexOf(l) !== -1 ? ' checked' : '';
+        return '<label class="filter-check"><input type="checkbox" value="' + escHtml(l) + '"' + chk
+          + ' onchange="toggleFilter(\'location\',this.value,this.checked)"><span>' + escHtml(l) + '</span></label>';
+      }).join('')
+    : '<span class="filter-empty-note">Nessun luogo assegnato in catalogo</span>';
 
-  document.getElementById('filter-modal-body').innerHTML = html;
-
-  /* Update filter button badge */
-  var badge = document.getElementById('filter-badge');
-  if (badge) {
-    badge.textContent    = activeCount;
-    badge.style.display  = activeCount > 0 ? 'inline-flex' : 'none';
-  }
+  updateFilterBadge();
 }
 
-function toggleFilterStatus(value, checked) {
-  var arr = searchState.filters.status;
+function toggleFilter(type, value, checked) {
+  var arr = searchState.filters[type];
   var idx = arr.indexOf(value);
-  if (checked && idx === -1) arr.push(value);
-  if (!checked && idx !== -1) arr.splice(idx, 1);
+  if (checked && idx === -1)  arr.push(value);
+  if (!checked && idx !== -1) arr.splice(idx,1);
   state.page = 0;
   renderCollection();
   updateFilterBadge();
 }
 
-function toggleFilterLocation(value, checked) {
-  var arr = searchState.filters.location;
-  var idx = arr.indexOf(value);
-  if (checked && idx === -1) arr.push(value);
-  if (!checked && idx !== -1) arr.splice(idx, 1);
-  state.page = 0;
-  renderCollection();
-  updateFilterBadge();
-}
-
-function resetFilters() {
+function clearFilters() {
   searchState.filters.status   = [];
   searchState.filters.location = [];
   state.page = 0;
   renderCollection();
-  renderFilterModal();   /* re-render checkboxes unchecked */
-  updateFilterBadge();
+  renderFilterModal();
 }
 
 function updateFilterBadge() {
   var count = searchState.filters.status.length + searchState.filters.location.length;
   var badge = document.getElementById('filter-badge');
-  if (badge) {
-    badge.textContent   = count;
-    badge.style.display = count > 0 ? 'inline-flex' : 'none';
-  }
+  if (!badge) return;
+  badge.textContent   = count;
+  badge.style.display = count > 0 ? 'inline-flex' : 'none';
 }
