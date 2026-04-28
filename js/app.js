@@ -7,6 +7,7 @@ var DEFAULT_LOCATIONS = ['Scaffale studio', 'Camera da letto', 'Soggiorno'];
 var state = {
   collection: JSON.parse(localStorage.getItem('bookstack_collection') || '[]'),
   locations:  JSON.parse(localStorage.getItem('bookstack_locations')  || 'null') || DEFAULT_LOCATIONS.slice(),
+  categories: null,   /* initialised by categories.js initCategories() */
   currentBook: null,
   editingId:   null,
   page:        0,
@@ -16,6 +17,7 @@ var state = {
 function save() {
   localStorage.setItem('bookstack_collection', JSON.stringify(state.collection));
   localStorage.setItem('bookstack_locations',  JSON.stringify(state.locations));
+  /* categories persisted separately by saveCategories() in categories.js */
 }
 
 /* ── API callback ── */
@@ -59,11 +61,13 @@ function dismissResult() {
 
 function addToCollection() {
   if (!state.currentBook) return;
-  var location  = document.getElementById('r-location').value || 'Non specificato';
+  var location = document.getElementById('r-location').value || 'Non specificato';
   var entry = Object.assign({}, state.currentBook, {
     location:  location,
     status:    document.getElementById('r-status').value,
     notes:     document.getElementById('r-notes').value.trim(),
+    category:  document.getElementById('r-category').value || '',
+    tags:      document.getElementById('r-tags').value.trim(),
     dateAdded: new Date().toLocaleDateString('it-IT'),
     id:        Date.now()
   });
@@ -187,7 +191,11 @@ function bookItemHTML(book) {
       + JSON.stringify(escHtml(book.title)) + '))">'
     : '<div class="book-spine">' + escHtml(book.title) + '</div>';
 
-  return '<div class="book-item">'
+  var catStyle = (typeof categoryStyle === 'function') ? categoryStyle(book.category) : '';
+  var catClass = book.category ? ' has-category' : '';
+  var catHTML  = (typeof categoryPillHTML === 'function') ? categoryPillHTML(book) : '';
+
+  return '<div class="book-item' + catClass + '" style="' + catStyle + '">'
     + coverHTML
     + '<div class="book-info">'
     + '<div class="book-item-title">' + escHtml(book.title) + '</div>'
@@ -195,6 +203,7 @@ function bookItemHTML(book) {
     + '<div class="book-item-footer">'
     + '<span class="status-pill ' + (STATUS_CLASS[book.status]||'') + '">' + escHtml(book.status) + '</span>'
     + '<span class="location-pill">' + escHtml(book.location) + '</span>'
+    + catHTML
     + '</div></div>'
     + '<div class="book-actions">'
     + '<button class="btn-action btn-edit"   onclick="openEdit('   + book.id + ')" title="Modifica">' + EDIT_SVG   + '</button>'
@@ -287,6 +296,8 @@ function removeLocation(i) {
    ════════════════════════════════════════════ */
 function openSettings() {
   renderSettingsLocations();
+  if (typeof renderSettingsCategories === 'function') renderSettingsCategories();
+  if (typeof initSettingsSwatches    === 'function') initSettingsSwatches();
   document.getElementById('settings-modal').classList.add('open');
 }
 function closeSettings() {
@@ -316,6 +327,14 @@ function openEdit(id) {
   document.getElementById('ed-notes').value     = book.notes     || '';
   document.getElementById('ed-status').value    = book.status    || 'Da leggere';
   document.getElementById('ed-location-custom').value = '';
+
+  /* Category & tags */
+  if (typeof populateCategorySelect === 'function') {
+    populateCategorySelect('ed-category', book.category || '');
+  }
+  document.getElementById('ed-tags').value = book.tags || '';
+  var edTagWrap = document.getElementById('ed-tags-wrap');
+  if (edTagWrap) edTagWrap.style.display = book.category ? 'block' : 'none';
 
   var inList = state.locations.indexOf(book.location) !== -1;
   /* If location isn't in the list yet, add it silently so the dropdown can select it */
@@ -363,7 +382,9 @@ function saveEdit() {
     coverUrl:  document.getElementById('ed-cover').value.trim()     || null,
     location:  location,
     status:    document.getElementById('ed-status').value,
-    notes:     document.getElementById('ed-notes').value.trim()     || ''
+    notes:     document.getElementById('ed-notes').value.trim()     || '',
+    category:  document.getElementById('ed-category').value         || '',
+    tags:      document.getElementById('ed-tags').value.trim()      || ''
   });
 
   save();
@@ -419,7 +440,7 @@ function confirmDeleteAll() {
 /* ════════════════════════════════════════════
    CSV export / import
    ════════════════════════════════════════════ */
-var CSV_HEADERS = ['id','coverUrl','author','title','year','publisher','isbn','source','location','status','notes','dateAdded'];
+var CSV_HEADERS = ['id','coverUrl','author','title','year','publisher','isbn','source','location','status','notes','dateAdded','category','tags'];
 
 function csvEscape(v) {
   var s = String(v == null ? '' : v);
@@ -603,6 +624,8 @@ function addManualEntry() {
     year:document.getElementById('ne-year').value.trim()||'—',
     source:'', location:location, status:document.getElementById('ne-status').value,
     notes:document.getElementById('ne-notes').value.trim()||'',
+    category:document.getElementById('ne-category').value||'',
+    tags:document.getElementById('ne-tags').value.trim()||'',
     dateAdded:new Date().toLocaleDateString('it-IT'),
     coverUrl:document.getElementById('ne-cover').value.trim()||null
   };
@@ -635,5 +658,6 @@ function escHtml(s) {
    Init
    ════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', function() {
+  if (typeof initCategories === 'function') initCategories();
   renderCollection();
 });

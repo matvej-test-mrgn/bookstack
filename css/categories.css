@@ -1,0 +1,126 @@
+/* ════════════════════════════════════════════
+   BookStack — categories.css
+   ════════════════════════════════════════════ */
+
+/* ── Book item category background ── */
+.book-item.has-category {
+  border-radius: var(--radius-sm);
+  /* background set inline per-item */
+  border-left: 3px solid transparent; /* overridden inline */
+}
+
+/* ── Category pill ── */
+.category-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  /* bg, color, border-color set inline */
+}
+
+/* ── Tag chips ── */
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.625rem;
+  padding: 1px 6px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  /* color, border-color set inline */
+  letter-spacing: 0.01em;
+}
+
+/* ── Category+tags row in book-item-footer ── */
+.book-item-footer {
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* ── Color swatches ── */
+.color-swatch-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0.5rem 0 0.25rem;
+}
+
+.color-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.12s;
+  padding: 0;
+  flex-shrink: 0;
+}
+.color-swatch:hover {
+  transform: scale(1.18);
+}
+.color-swatch.swatch-selected {
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px currentColor;
+  transform: scale(1.1);
+}
+
+/* ── Category custom-add wrap ── */
+.category-custom-wrap {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.category-custom-wrap input[type="text"] {
+  margin-bottom: 0.5rem;
+}
+
+.category-custom-wrap .swatch-label {
+  font-size: 0.75rem;
+  color: var(--text-3);
+  margin-bottom: 0.25rem;
+  display: block;
+}
+
+/* ── Tags input wrap ── */
+.tags-input-wrap {
+  margin-top: 0.5rem;
+}
+
+.tags-hint {
+  font-size: 0.75rem;
+  color: var(--text-3);
+  margin-top: 0.25rem;
+}
+
+/* ── Settings category list ── */
+.settings-category-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.category-settings-item {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.625rem 0.875rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.9375rem;
+}
+.category-settings-item span { flex: 1; }
+
+.category-color-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  flex-shrink: 0;
+}

@@ -778,3 +778,18 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
   transition: background 0.15s;
 }
 .btn-location-confirm:hover { background: var(--accent-dark); }
+
+/* ── Search bar padding fix (specificity override) ── */
+input.search-input {
+  padding: 0.65rem 2.5rem 0.65rem 2.875rem !important;
+}
+
+/* ── Settings section title ── */
+.settings-section-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  margin-bottom: 0.625rem;
+}
