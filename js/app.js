@@ -59,9 +59,7 @@ function dismissResult() {
 
 function addToCollection() {
   if (!state.currentBook) return;
-  var custom    = document.getElementById('r-location-custom').value.trim();
-  var sel       = document.getElementById('r-location').value;
-  var location  = custom || sel || 'Non specificato';
+  var location  = document.getElementById('r-location').value || 'Non specificato';
   var entry = Object.assign({}, state.currentBook, {
     location:  location,
     status:    document.getElementById('r-status').value,
@@ -75,6 +73,44 @@ function addToCollection() {
   renderCollection();
   dismissResult();
   showToast('Libro aggiunto alla collezione');
+}
+
+/* ════════════════════════════════════════════
+   Custom location — inline add + save to settings
+   prefix: 'r' | 'ne' | 'ed'
+   ════════════════════════════════════════════ */
+function toggleCustomLocation(prefix) {
+  var wrap = document.getElementById(prefix + '-location-custom-wrap');
+  var inp  = document.getElementById(prefix + '-location-custom');
+  var isOpen = wrap.style.display !== 'none';
+  wrap.style.display = isOpen ? 'none' : 'flex';
+  if (!isOpen) { inp.value = ''; inp.focus(); }
+}
+
+function confirmCustomLocation(prefix) {
+  var inp = document.getElementById(prefix + '-location-custom');
+  var val = inp.value.trim();
+  if (!val) return showToast('Inserisci un nome per il luogo');
+
+  /* Save to settings if not already present */
+  if (state.locations.indexOf(val) === -1) {
+    state.locations.push(val);
+    save();
+    /* Refresh settings list if modal is open */
+    var settingsOpen = document.getElementById('settings-modal').classList.contains('open');
+    if (settingsOpen) renderSettingsLocations();
+  }
+
+  /* Refresh all location dropdowns and select the new value */
+  var selIds = ['r-location', 'ne-location', 'ed-location'];
+  selIds.forEach(function(id) { populateLocationSelect(id, ''); });
+  var sel = document.getElementById(prefix + '-location');
+  sel.value = val;
+
+  /* Close the inline input */
+  document.getElementById(prefix + '-location-custom-wrap').style.display = 'none';
+  inp.value = '';
+  showToast('"' + val + '" aggiunto ai luoghi');
 }
 
 /* ════════════════════════════════════════════
@@ -282,8 +318,12 @@ function openEdit(id) {
   document.getElementById('ed-location-custom').value = '';
 
   var inList = state.locations.indexOf(book.location) !== -1;
-  populateLocationSelect('ed-location', inList ? book.location : '');
-  if (!inList) document.getElementById('ed-location-custom').value = book.location || '';
+  /* If location isn't in the list yet, add it silently so the dropdown can select it */
+  if (!inList && book.location && book.location !== 'Non specificato') {
+    state.locations.push(book.location);
+    save();
+  }
+  populateLocationSelect('ed-location', book.location);
 
   document.getElementById('edit-modal').classList.add('open');
 }
@@ -306,9 +346,7 @@ function saveEdit() {
     setTimeout(function(){ el.style.borderColor = ''; }, 2000);
     return showToast('Il titolo è obbligatorio');
   }
-  var custom   = document.getElementById('ed-location-custom').value.trim();
-  var sel      = document.getElementById('ed-location').value;
-  var location = custom || sel || 'Non specificato';
+  var location = document.getElementById('ed-location').value || 'Non specificato';
 
   var idx = -1;
   for (var i = 0; i < state.collection.length; i++) {
@@ -470,7 +508,7 @@ function importCatalog(event) {
 /* ════════════════════════════════════════════
    Google Drive export
    ════════════════════════════════════════════ */
-var GOOGLE_CLIENT_ID = '352776428431-2l9bk0gjtbdkof13q1dai7pro92749as.apps.googleusercontent.com';
+var GOOGLE_CLIENT_ID = '';
 var DRIVE_SCOPE      = 'https://www.googleapis.com/auth/drive.file';
 var driveToken       = null;
 
@@ -557,9 +595,7 @@ function addManualEntry() {
     setTimeout(function(){ el.style.borderColor=''; },2000);
     return showToast('Il titolo è obbligatorio');
   }
-  var custom   = document.getElementById('ne-location-custom').value.trim();
-  var sel      = document.getElementById('ne-location').value;
-  var location = custom || sel || 'Non specificato';
+  var location = document.getElementById('ne-location').value || 'Non specificato';
   var entry = {
     id:Date.now(), isbn:document.getElementById('ne-isbn').value.trim()||'—', title:title,
     author:document.getElementById('ne-author').value.trim()||'—',

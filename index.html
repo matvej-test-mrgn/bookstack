@@ -115,10 +115,18 @@
           </div>
           <div class="input-group full">
             <label for="ne-location">Luogo</label>
-            <div class="select-wrap">
-              <select id="ne-location"></select>
+            <div class="location-row">
+              <div class="select-wrap location-select-wrap">
+                <select id="ne-location"></select>
+              </div>
+              <button type="button" class="btn-location-edit" onclick="toggleCustomLocation('ne')" title="Aggiungi nuovo luogo">
+                <img src="svg/edit.svg" width="13" height="13" alt="Nuovo luogo">
+              </button>
             </div>
-            <input type="text" id="ne-location-custom" placeholder="Oppure scrivi un luogo…" style="margin-top:0.375rem;"/>
+            <div id="ne-location-custom-wrap" class="location-custom-wrap" style="display:none;">
+              <input type="text" id="ne-location-custom" placeholder="Nome del nuovo luogo…"/>
+              <button type="button" class="btn-location-confirm" onclick="confirmCustomLocation('ne')">Salva</button>
+            </div>
           </div>
           <div class="input-group full">
             <label for="ne-status">Stato di lettura</label>
@@ -161,12 +169,18 @@
       <div class="form-grid">
         <div class="input-group full">
           <label for="r-location">Luogo</label>
-          <div class="select-wrap">
-            <select id="r-location"></select>
+          <div class="location-row">
+            <div class="select-wrap location-select-wrap">
+              <select id="r-location"></select>
+            </div>
+            <button type="button" class="btn-location-edit" onclick="toggleCustomLocation('r')" title="Aggiungi nuovo luogo">
+              <img src="svg/edit.svg" width="13" height="13" alt="Nuovo luogo">
+            </button>
           </div>
-          <input type="text" id="r-location-custom"
-            placeholder="Oppure scrivi un luogo…"
-            style="margin-top:0.375rem;"/>
+          <div id="r-location-custom-wrap" class="location-custom-wrap" style="display:none;">
+            <input type="text" id="r-location-custom" placeholder="Nome del nuovo luogo…"/>
+            <button type="button" class="btn-location-confirm" onclick="confirmCustomLocation('r')">Salva</button>
+          </div>
         </div>
         <div class="input-group full">
           <label for="r-status">Stato di lettura</label>
@@ -219,7 +233,7 @@
         type="text"
         id="search-input"
         class="search-input"
-        placeholder="Cerca per titolo, autore, ISBN, editore, anno, luogo…"
+        placeholder="Cerca titolo, autore, ISBN, anno…"
         oninput="onSearchInput(this.value)"
       />
       <button id="search-clear" class="search-clear" onclick="clearSearch()" style="display:none;" title="Cancella ricerca">
@@ -378,10 +392,18 @@
       </div>
       <div class="input-group full">
         <label for="ed-location">Luogo</label>
-        <div class="select-wrap">
-          <select id="ed-location"></select>
+        <div class="location-row">
+          <div class="select-wrap location-select-wrap">
+            <select id="ed-location"></select>
+          </div>
+          <button type="button" class="btn-location-edit" onclick="toggleCustomLocation('ed')" title="Aggiungi nuovo luogo">
+            <img src="svg/edit.svg" width="13" height="13" alt="Nuovo luogo">
+          </button>
         </div>
-        <input type="text" id="ed-location-custom" placeholder="Oppure scrivi un luogo…" style="margin-top:0.375rem;"/>
+        <div id="ed-location-custom-wrap" class="location-custom-wrap" style="display:none;">
+          <input type="text" id="ed-location-custom" placeholder="Nome del nuovo luogo…"/>
+          <button type="button" class="btn-location-confirm" onclick="confirmCustomLocation('ed')">Salva</button>
+        </div>
       </div>
       <div class="input-group full">
         <label for="ed-status">Stato di lettura</label>
