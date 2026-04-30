@@ -302,7 +302,6 @@ function removeLocation(i) {
 function openSettings() {
   renderSettingsLocations();
   if (typeof renderSettingsCategories === 'function') renderSettingsCategories();
-  if (typeof initSettingsSwatches    === 'function') initSettingsSwatches();
   document.getElementById('settings-modal').classList.add('open');
 }
 function closeSettings() {

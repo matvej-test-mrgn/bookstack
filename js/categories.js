@@ -1,11 +1,10 @@
 /* ════════════════════════════════════════════
    BookStack — categories.js
    Category & tag management.
-   Depends on: app.js (state, save, escHtml, showToast,
-               renderSettingsLocations-style pattern)
+   Depends on: app.js (state, save, escHtml, showToast)
    ════════════════════════════════════════════ */
 
-/* ── Pastel palette for the color picker ── */
+/* ── Pastel palette ── */
 var PASTEL_PALETTE = [
   { name: 'Lavanda', bg: '#EDE9F8', text: '#5B4A8A' },
   { name: 'Menta',   bg: '#E6F4EC', text: '#2E7D52' },
@@ -27,27 +26,21 @@ var DEFAULT_CATEGORIES = [
   { id: 'cat_misc',       name: 'Miscellanea', bg: '#F5F0E6', text: '#6B5A3A' }
 ];
 
-/* ── Initialise categories on state (called from app.js init) ── */
+/* ── Init ── */
 function initCategories() {
   if (!state.categories) {
     var stored = localStorage.getItem('bookstack_categories');
     state.categories = stored ? JSON.parse(stored) : deepCopy(DEFAULT_CATEGORIES);
   }
 }
-
-/* Auto-initialise as soon as categories.js is parsed (fixes timing issue
-   where DOMContentLoaded in app.js fires before categories.js is ready) */
 if (typeof state !== 'undefined') { initCategories(); }
 
 function saveCategories() {
   localStorage.setItem('bookstack_categories', JSON.stringify(state.categories));
 }
 
-function deepCopy(obj) {
-  return JSON.parse(JSON.stringify(obj));
-}
+function deepCopy(obj) { return JSON.parse(JSON.stringify(obj)); }
 
-/* ── Look up a category by name ── */
 function getCategoryByName(name) {
   if (!name || !state.categories) return null;
   for (var i = 0; i < state.categories.length; i++) {
@@ -58,7 +51,6 @@ function getCategoryByName(name) {
 
 /* ════════════════════════════════════════════
    Dropdown population
-   prefix: 'r' | 'ne' | 'ed'
    ════════════════════════════════════════════ */
 function populateCategorySelect(selectId, currentValue) {
   var sel = document.getElementById(selectId);
@@ -72,70 +64,7 @@ function populateCategorySelect(selectId, currentValue) {
 }
 
 /* ════════════════════════════════════════════
-   Inline "add custom category" (edit-icon trigger)
-   prefix: 'r' | 'ne' | 'ed'
-   ════════════════════════════════════════════ */
-
-/* Selected swatch per prefix */
-var _selectedSwatch = {};
-
-function toggleCustomCategory(prefix) {
-  var wrap = document.getElementById(prefix + '-category-custom-wrap');
-  var isOpen = wrap.style.display !== 'none';
-  wrap.style.display = isOpen ? 'none' : 'block';
-  if (!isOpen) {
-    document.getElementById(prefix + '-category-custom-name').value = '';
-    _selectedSwatch[prefix] = PASTEL_PALETTE[0];
-    renderSwatches(prefix);
-  }
-}
-
-function renderSwatches(prefix) {
-  var container = document.getElementById(prefix + '-swatches');
-  if (!container) return;
-  container.innerHTML = PASTEL_PALETTE.map(function(p, i) {
-    var selected = (_selectedSwatch[prefix] && _selectedSwatch[prefix].bg === p.bg) ? ' swatch-selected' : '';
-    return '<button type="button" class="color-swatch' + selected + '"'
-      + ' style="background:' + p.bg + '; border-color:' + p.text + ';"'
-      + ' title="' + escHtml(p.name) + '"'
-      + ' onclick="selectSwatch(\'' + prefix + '\',' + i + ')"></button>';
-  }).join('');
-}
-
-function selectSwatch(prefix, index) {
-  _selectedSwatch[prefix] = PASTEL_PALETTE[index];
-  renderSwatches(prefix);
-}
-
-function confirmCustomCategory(prefix) {
-  var nameInput = document.getElementById(prefix + '-category-custom-name');
-  var name = nameInput.value.trim();
-  if (!name) return showToast('Inserisci un nome per la categoria');
-
-  var existing = getCategoryByName(name);
-  if (!existing) {
-    var swatch = _selectedSwatch[prefix] || PASTEL_PALETTE[0];
-    var newCat = { id: 'cat_' + Date.now(), name: name, bg: swatch.bg, text: swatch.text };
-    state.categories.push(newCat);
-    saveCategories();
-    if (document.getElementById('settings-modal').classList.contains('open')) {
-      renderSettingsCategories();
-    }
-  }
-
-  /* Refresh all category dropdowns */
-  ['r','ne','ed'].forEach(function(p) {
-    populateCategorySelect(p + '-category', p === prefix ? name : null);
-  });
-  var sel = document.getElementById(prefix + '-category');
-  if (sel) sel.value = name;
-
-  document.getElementById(prefix + '-category-custom-wrap').style.display = 'none';
-  showToast('"' + name + '" aggiunta alle categorie');
-}
-
-/* ════════════════════════════════════════════
-   Tag input — show/hide based on category selection
+   Tag visibility on category change
    ════════════════════════════════════════════ */
 function onCategoryChange(prefix) {
   var sel     = document.getElementById(prefix + '-category');
@@ -145,31 +74,7 @@ function onCategoryChange(prefix) {
 }
 
 /* ════════════════════════════════════════════
-   Settings — category list
-   ════════════════════════════════════════════ */
-function renderSettingsCategories() {
-  var container = document.getElementById('settings-category-list');
-  if (!container) return;
-
-  container.innerHTML = (state.categories || []).map(function(c, i) {
-    return '<div class="category-settings-item">'
-      + '<div class="category-color-dot" style="background:' + c.bg + '; border-color:' + c.text + ';"></div>'
-      + '<span>' + escHtml(c.name) + '</span>'
-      + '<button class="btn-action btn-delete" onclick="removeCategory(' + i + ')" title="Rimuovi">'
-      + '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 4l12 12M16 4L4 16"/></svg>'
-      + '</button></div>';
-  }).join('');
-}
-
-function removeCategory(i) {
-  state.categories.splice(i, 1);
-  saveCategories();
-  renderSettingsCategories();
-}
-
-/* ════════════════════════════════════════════
-   Book item visual — category background
-   Returns inline style string for the book-item div
+   Book item visuals
    ════════════════════════════════════════════ */
 function categoryStyle(categoryName) {
   var cat = getCategoryByName(categoryName);
@@ -177,48 +82,101 @@ function categoryStyle(categoryName) {
   return 'background:' + cat.bg + ';';
 }
 
-/* Returns HTML for category pill only (tags are CSV-only, not shown in list) */
 function categoryPillHTML(book) {
   if (!book.category) return '';
-  var cat = getCategoryByName(book.category);
+  var cat  = getCategoryByName(book.category);
   var bg   = cat ? cat.bg   : '#F0EDE7';
   var text = cat ? cat.text : '#6B6860';
-
-  return '<span class="category-pill" style="background:' + bg + ';color:' + text + ';border-color:' + text + '20;">'
-    + escHtml(book.category) + '</span>';
+  return '<span class="category-pill" style="background:' + bg + ';color:' + text
+    + ';border-color:' + text + '20;">' + escHtml(book.category) + '</span>';
 }
 
-/* ── Settings panel: add category from the main settings modal ── */
-var _settingsSwatch = PASTEL_PALETTE[0];
+/* ════════════════════════════════════════════
+   Settings panel — category list with
+   inline colour picker per category
+   ════════════════════════════════════════════ */
 
-function initSettingsSwatches() {
-  var container = document.getElementById('settings-swatches');
+/* Which category index has the colour picker open (-1 = none) */
+var _openColorPickerIdx = -1;
+
+function renderSettingsCategories() {
+  var container = document.getElementById('settings-category-list');
   if (!container) return;
-  _settingsSwatch = PASTEL_PALETTE[0];
-  container.innerHTML = PASTEL_PALETTE.map(function(p, i) {
-    var sel = (p.bg === _settingsSwatch.bg) ? ' swatch-selected' : '';
-    return '<button type="button" class="color-swatch' + sel + '"'
-      + ' style="background:' + p.bg + '; border-color:' + p.text + ';"'
-      + ' title="' + escHtml(p.name) + '"'
-      + ' onclick="pickSettingsSwatch(' + i + ')"></button>';
+
+  container.innerHTML = (state.categories || []).map(function(c, i) {
+    var pickerOpen = (_openColorPickerIdx === i);
+
+    var swatchesHTML = pickerOpen
+      ? '<div class="cat-color-picker">'
+        + PASTEL_PALETTE.map(function(p, pi) {
+            var isCurrent = (c.bg === p.bg);
+            return '<button type="button"'
+              + ' class="color-swatch' + (isCurrent ? ' swatch-selected' : '') + '"'
+              + ' style="background:' + p.bg + '; border-color:' + p.text + ';"'
+              + ' title="' + escHtml(p.name) + '"'
+              + ' onclick="pickCategoryColor(' + i + ',' + pi + ')"></button>';
+          }).join('')
+        + '</div>'
+      : '';
+
+    return '<div class="category-settings-item' + (pickerOpen ? ' picker-open' : '') + '">'
+      + '<button type="button" class="cat-color-btn" title="Cambia colore"'
+      + '  style="background:' + c.bg + '; border-color:' + c.text + ';"'
+      + '  onclick="toggleColorPicker(' + i + ')"></button>'
+      + '<span>' + escHtml(c.name) + '</span>'
+      + '<button class="btn-action btn-delete" onclick="removeCategory(' + i + ')" title="Rimuovi">'
+      + '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">'
+      + '<path d="M4 4l12 12M16 4L4 16"/></svg></button>'
+      + '</div>'
+      + swatchesHTML;
   }).join('');
 }
 
-function pickSettingsSwatch(index) {
-  _settingsSwatch = PASTEL_PALETTE[index];
-  initSettingsSwatches();
+function toggleColorPicker(idx) {
+  _openColorPickerIdx = (_openColorPickerIdx === idx) ? -1 : idx;
+  renderSettingsCategories();
 }
 
+function pickCategoryColor(catIdx, paletteIdx) {
+  var swatch = PASTEL_PALETTE[paletteIdx];
+  state.categories[catIdx].bg   = swatch.bg;
+  state.categories[catIdx].text = swatch.text;
+  saveCategories();
+  _openColorPickerIdx = -1;   /* close picker after picking */
+  renderSettingsCategories();
+  /* Refresh collection so book-item backgrounds update immediately */
+  if (typeof renderCollection === 'function') renderCollection();
+}
+
+function removeCategory(i) {
+  if (_openColorPickerIdx === i) _openColorPickerIdx = -1;
+  state.categories.splice(i, 1);
+  saveCategories();
+  renderSettingsCategories();
+}
+
+/* ════════════════════════════════════════════
+   Settings panel — add new category
+   (colour can be changed after adding via the
+    inline picker on the category row)
+   ════════════════════════════════════════════ */
 function addCategoryFromSettings() {
   var input = document.getElementById('new-category-name-input');
   var name  = input.value.trim();
   if (!name) return showToast('Inserisci un nome per la categoria');
   if (getCategoryByName(name)) return showToast('Categoria già presente');
-  var swatch = _settingsSwatch || PASTEL_PALETTE[0];
-  state.categories.push({ id: 'cat_' + Date.now(), name: name, bg: swatch.bg, text: swatch.text });
+
+  /* Pick a palette colour not already in use, or cycle through */
+  var usedBgs = (state.categories || []).map(function(c){ return c.bg; });
+  var swatch  = PASTEL_PALETTE[0];
+  for (var i = 0; i < PASTEL_PALETTE.length; i++) {
+    if (usedBgs.indexOf(PASTEL_PALETTE[i].bg) === -1) { swatch = PASTEL_PALETTE[i]; break; }
+  }
+
+  var newCat = { id: 'cat_' + Date.now(), name: name, bg: swatch.bg, text: swatch.text };
+  state.categories.push(newCat);
   saveCategories();
   renderSettingsCategories();
-  initSettingsSwatches();
   input.value = '';
-  showToast('"' + name + '" aggiunta');
+  showToast('"' + name + '" aggiunta — tocca il pallino per cambiare colore');
 }
