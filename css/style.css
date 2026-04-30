@@ -115,6 +115,7 @@ header {
   align-items: center;
   gap: 2px;
   flex-shrink: 0;
+  align-self: center;
 }
 
 .btn-action {
@@ -341,11 +342,12 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
 
 /* ── Book item ── */
 .book-item {
-  display: flex; align-items: flex-start; gap: 0.875rem;
-  padding: 0.875rem 0; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 0.875rem;
+  padding: 0.75rem; border-bottom: 1px solid var(--border);
 }
-.book-item:last-child  { border-bottom: none; padding-bottom: 0; }
-.book-item:first-child { padding-top: 0; }
+.book-item:last-child  { border-bottom: none; }
+.book-item:first-child { }
+.book-item.has-category { border-radius: var(--radius-sm); }
 
 /* Cover image (primary) */
 .book-cover-img {
@@ -412,6 +414,7 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
   background: var(--surface); border-radius: var(--radius) var(--radius) 0 0;
   padding: 1.5rem 1.25rem 2rem; width: 100%; max-width: 480px;
   transform: translateY(40px); transition: transform 0.25s ease;
+  max-height: 88vh; overflow-y: auto;
 }
 .modal-overlay.open .modal { transform: translateY(0); }
 .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }

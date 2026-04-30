@@ -47,6 +47,7 @@ function renderResult(book) {
   }
 
   populateLocationSelect('r-location', '');
+  if (typeof populateCategorySelect === 'function') populateCategorySelect('r-category', '');
 
   var section = document.getElementById('result-section');
   section.classList.add('visible');
@@ -598,6 +599,7 @@ function toggleNewEntry(forceClose) {
   } else {
     newEntryOpen=true; form.style.display='block'; chevron.style.transform='rotate(180deg)';
     populateLocationSelect('ne-location','');
+    if (typeof populateCategorySelect === 'function') populateCategorySelect('ne-category', '');
     setTimeout(function(){ form.scrollIntoView({ behavior:'smooth', block:'nearest' }); },50);
   }
 }

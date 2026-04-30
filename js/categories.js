@@ -35,6 +35,10 @@ function initCategories() {
   }
 }
 
+/* Auto-initialise as soon as categories.js is parsed (fixes timing issue
+   where DOMContentLoaded in app.js fires before categories.js is ready) */
+if (typeof state !== 'undefined') { initCategories(); }
+
 function saveCategories() {
   localStorage.setItem('bookstack_categories', JSON.stringify(state.categories));
 }
