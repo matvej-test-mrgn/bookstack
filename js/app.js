@@ -158,12 +158,14 @@ function renderCollection() {
   var isFiltered = (typeof searchState !== 'undefined') && (
     searchState.query.trim() !== '' ||
     searchState.filters.status.length > 0 ||
-    searchState.filters.location.length > 0
+    searchState.filters.location.length > 0 ||
+    (searchState.filters.category && searchState.filters.category.length > 0)
   );
 
   if (display.length === 0) {
     list.innerHTML           = emptyStateHTML(isFiltered);
     pagination.style.display = 'none';
+    if (typeof updateResultsCount === 'function') updateResultsCount(0);
     return;
   }
 
@@ -174,6 +176,8 @@ function renderCollection() {
   var start = state.page * state.perPage;
   var end   = Math.min(start + state.perPage, total);
   list.innerHTML = display.slice(start, end).map(bookItemHTML).join('');
+
+  if (typeof updateResultsCount === 'function') updateResultsCount(total);
 
   if (totalPages > 1) {
     pagination.style.display = 'flex';

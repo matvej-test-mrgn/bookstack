@@ -177,24 +177,15 @@ function categoryStyle(categoryName) {
   return 'background:' + cat.bg + ';';
 }
 
-/* Returns HTML for category pill + tag chips (for bookItemHTML) */
+/* Returns HTML for category pill only (tags are CSV-only, not shown in list) */
 function categoryPillHTML(book) {
   if (!book.category) return '';
   var cat = getCategoryByName(book.category);
   var bg   = cat ? cat.bg   : '#F0EDE7';
   var text = cat ? cat.text : '#6B6860';
 
-  var html = '<span class="category-pill" style="background:' + bg + ';color:' + text + ';border-color:' + text + '20;">'
+  return '<span class="category-pill" style="background:' + bg + ';color:' + text + ';border-color:' + text + '20;">'
     + escHtml(book.category) + '</span>';
-
-  if (book.tags) {
-    var tags = String(book.tags).split(',').map(function(t){ return t.trim(); }).filter(Boolean);
-    tags.forEach(function(t) {
-      html += '<span class="tag-chip" style="border-color:' + text + '40;color:' + text + ';">'
-        + escHtml(t) + '</span>';
-    });
-  }
-  return html;
 }
 
 /* ── Settings panel: add category from the main settings modal ── */

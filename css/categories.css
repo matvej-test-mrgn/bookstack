@@ -44,8 +44,9 @@
 .color-swatch-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  padding: 0.5rem 0 0.25rem;
+  gap: 8px;
+  padding: 0.5rem 0.25rem 0.25rem;
+  overflow: visible;
 }
 
 .color-swatch {
@@ -54,9 +55,12 @@
   border-radius: 50%;
   border: 2px solid transparent;
   cursor: pointer;
-  transition: transform 0.12s, box-shadow 0.12s;
+  transition: transform 0.12s;
   padding: 0;
   flex-shrink: 0;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
 }
 .color-swatch:hover {
   transform: scale(1.18);

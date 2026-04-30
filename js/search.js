@@ -7,7 +7,7 @@
 var searchState = {
   query:   '',
   sortBy:  'dateAdded_desc',
-  filters: { status: [], location: [] }
+  filters: { status: [], location: [], category: [] }
 };
 
 /* ── Parse Italian date dd/mm/yyyy to timestamp ── */
@@ -25,11 +25,11 @@ function parseDateIt(s) {
 function getDisplayCollection() {
   var col = state.collection.slice();
 
-  /* Free-text search */
+  /* Free-text search — includes tags but NOT category (use filters for that) */
   var q = searchState.query.trim().toLowerCase();
   if (q) {
     col = col.filter(function(b) {
-      return ['author','title','year','publisher','isbn','location'].some(function(k) {
+      return ['author','title','year','publisher','isbn','location','tags'].some(function(k) {
         return String(b[k] || '').toLowerCase().indexOf(q) !== -1;
       });
     });
@@ -46,6 +46,13 @@ function getDisplayCollection() {
   if (searchState.filters.location.length > 0) {
     col = col.filter(function(b) {
       return searchState.filters.location.indexOf(b.location) !== -1;
+    });
+  }
+
+  /* Category filter */
+  if (searchState.filters.category.length > 0) {
+    col = col.filter(function(b) {
+      return searchState.filters.category.indexOf(b.category || '') !== -1;
     });
   }
 
@@ -72,7 +79,6 @@ function onSearchInput(value) {
   searchState.query = value;
   state.page = 0;
   renderCollection();
-  /* Show/hide clear button */
   var clr = document.getElementById('search-clear');
   if (clr) clr.style.display = value.length > 0 ? 'flex' : 'none';
 }
@@ -135,11 +141,31 @@ function renderFilterModal() {
       }).join('')
     : '<span class="filter-empty-note">Nessun luogo assegnato in catalogo</span>';
 
+  /* Category filter — only categories actually used in the collection */
+  var catListEl = document.getElementById('filter-category-list');
+  if (catListEl) {
+    var cats = (state.categories || []).filter(function(c) {
+      return state.collection.some(function(b) { return b.category === c.name; });
+    });
+    catListEl.innerHTML = cats.length
+      ? cats.map(function(c) {
+          var chk = searchState.filters.category.indexOf(c.name) !== -1 ? ' checked' : '';
+          var dot = '<span style="display:inline-block;width:9px;height:9px;border-radius:50%;'
+            + 'background:' + c.bg + ';border:1.5px solid ' + c.text + ';flex-shrink:0;margin-right:2px;"></span>';
+          return '<label class="filter-check">'
+            + '<input type="checkbox" value="' + escHtml(c.name) + '"' + chk
+            + ' onchange="toggleFilter(\'category\',this.value,this.checked)">'
+            + dot + '<span>' + escHtml(c.name) + '</span></label>';
+        }).join('')
+      : '<span class="filter-empty-note">Nessuna categoria assegnata in catalogo</span>';
+  }
+
   updateFilterBadge();
 }
 
 function toggleFilter(type, value, checked) {
   var arr = searchState.filters[type];
+  if (!arr) return;
   var idx = arr.indexOf(value);
   if (checked && idx === -1)  arr.push(value);
   if (!checked && idx !== -1) arr.splice(idx,1);
@@ -151,15 +177,40 @@ function toggleFilter(type, value, checked) {
 function clearFilters() {
   searchState.filters.status   = [];
   searchState.filters.location = [];
+  searchState.filters.category = [];
   state.page = 0;
   renderCollection();
   renderFilterModal();
 }
 
 function updateFilterBadge() {
-  var count = searchState.filters.status.length + searchState.filters.location.length;
+  var count = searchState.filters.status.length
+            + searchState.filters.location.length
+            + searchState.filters.category.length;
   var badge = document.getElementById('filter-badge');
   if (!badge) return;
   badge.textContent   = count;
   badge.style.display = count > 0 ? 'inline-flex' : 'none';
+}
+
+/* ════════════════════════════════════════════
+   Results count — shown below filter/sort row
+   when any filter or search query is active.
+   ════════════════════════════════════════════ */
+function updateResultsCount(filteredCount) {
+  var el = document.getElementById('filter-results-count');
+  if (!el) return;
+
+  var hasFilters = searchState.query.trim() !== ''
+    || searchState.filters.status.length > 0
+    || searchState.filters.location.length > 0
+    || searchState.filters.category.length > 0;
+
+  if (!hasFilters) {
+    el.style.display = 'none';
+    return;
+  }
+
+  el.style.display = 'block';
+  el.textContent   = filteredCount === 1 ? '1 risultato' : filteredCount + ' risultati';
 }
