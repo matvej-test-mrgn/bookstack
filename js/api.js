@@ -1,7 +1,6 @@
 /* ════════════════════════════════════════════
    BookStack — api.js
-   Cascade search: Google Books → Open Library → SBN OPAC
-   Also retrieves cover URLs where available.
+   Cascade search: Google Books → Open Library Search → Open Library ISBN
    ════════════════════════════════════════════ */
 
 /* ── 1. Google Books ── */
@@ -17,7 +16,6 @@ async function searchGoogleBooks(isbn) {
   const info = data.items[0].volumeInfo;
   if (!info.title) return null;
 
-  /* Google sometimes returns http:// — force https */
   const rawCover = info.imageLinks?.thumbnail || info.imageLinks?.smallThumbnail || null;
   const coverUrl = rawCover ? rawCover.replace(/^http:\/\//, 'https://') : null;
 
@@ -31,68 +29,74 @@ async function searchGoogleBooks(isbn) {
   };
 }
 
-/* ── 2. Open Library ── */
+/* ── 2. Open Library — Search endpoint (more reliable than /api/books) ── */
 async function searchOpenLibrary(isbn) {
   const res = await fetch(
-    `https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=data`,
+    `https://openlibrary.org/search.json?isbn=${isbn}&limit=1`
+    + `&fields=title,author_name,publisher,first_publish_year,cover_i`,
     { signal: AbortSignal.timeout(8000) }
   );
   if (!res.ok) return null;
   const data = await res.json();
 
-  const book = data[`ISBN:${isbn}`];
-  if (!book?.title) return null;
+  const doc = data.docs?.[0];
+  if (!doc?.title) return null;
 
-  /* Cover: Open Library returns direct CDN URLs in the data response */
-  const coverUrl = book.cover?.medium || book.cover?.small || book.cover?.large || null;
+  const coverUrl = doc.cover_i
+    ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`
+    : null;
 
   return {
-    title:     book.title,
-    author:    (book.authors    || []).map(a => a.name).join(', ') || '—',
-    publisher: (book.publishers || []).map(p => p.name).join(', ') || '—',
-    year:      book.publish_date?.match(/\d{4}/)?.[0] || '—',
+    title:     doc.title,
+    author:    (doc.author_name || []).join(', ') || '—',
+    publisher: (doc.publisher   || []).join(', ') || '—',
+    year:      doc.first_publish_year?.toString() || '—',
     coverUrl,
     source:    'Open Library'
   };
 }
 
-/* ── 3. SBN OPAC (via CORS proxy, HTML scraping) ── */
-async function searchSBN(isbn) {
-  const sbnUrl   = `https://opac.sbn.it/opacsbn/opaclib?db=solr_remote&ricerca=SI&resultForward=opac%2Fopen-search.jsp&Text1=${isbn}&Indice1=ISBN&NumRec=1&lang=IT`;
-  const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(sbnUrl)}`;
-
-  const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(12000) });
+/* ── 3. Open Library — Direct ISBN lookup (different data, richer for Italian editions) ── */
+async function searchOpenLibraryISBN(isbn) {
+  const res = await fetch(
+    `https://openlibrary.org/isbn/${isbn}.json`,
+    { signal: AbortSignal.timeout(8000) }
+  );
   if (!res.ok) return null;
+  const book = await res.json();
+  if (!book?.title) return null;
 
-  const data = await res.json();
-  if (!data.contents) return null;
+  /* Cover from covers array */
+  const coverUrl = book.covers?.length
+    ? `https://covers.openlibrary.org/b/id/${book.covers[0]}-M.jpg`
+    : null;
 
-  const parser = new DOMParser();
-  const doc    = parser.parseFromString(data.contents, 'text/html');
+  /* Year from publish_date string e.g. "2019", "January 1, 2019" */
+  const year = book.publish_date?.match(/\d{4}/)?.[0] || '—';
 
-  /* SBN OPAC does not expose cover images in its search results */
-  const titleEl =
-    doc.querySelector('.titoloCard')       ||
-    doc.querySelector('.risultatoTitolo')  ||
-    doc.querySelector('span.title')        ||
-    doc.querySelector('td.td_titolo')      ||
-    [...doc.querySelectorAll('td')].find(td => td.className?.includes('titol'));
-
-  if (!titleEl) return null;
-  const title = titleEl.textContent.trim();
-  if (!title) return null;
-
-  const authorEl    = doc.querySelector('.autoreCard')  || doc.querySelector('td.td_autore');
-  const publisherEl = doc.querySelector('.editoreCard') || doc.querySelector('td.td_editore');
-  const yearEl      = doc.querySelector('.annoCard')    || doc.querySelector('td.td_anno');
+  /* Author: attempt to resolve the first /authors/{key}.json — short timeout */
+  let author = '—';
+  if (book.authors?.length) {
+    try {
+      const authorKey = book.authors[0].key; // e.g. "/authors/OL123A"
+      const ar = await fetch(
+        `https://openlibrary.org${authorKey}.json`,
+        { signal: AbortSignal.timeout(4000) }
+      );
+      if (ar.ok) {
+        const ad = await ar.json();
+        if (ad.name) author = ad.name;
+      }
+    } catch(e) { /* leave as '—' */ }
+  }
 
   return {
-    title,
-    author:    authorEl?.textContent.trim()                   || '—',
-    publisher: publisherEl?.textContent.trim()                || '—',
-    year:      yearEl?.textContent.trim().match(/\d{4}/)?.[0] || '—',
-    coverUrl:  null,   /* SBN does not provide cover images */
-    source:    'SBN'
+    title:     book.title,
+    author,
+    publisher: (book.publishers || []).join(', ') || '—',
+    year,
+    coverUrl,
+    source:    'Open Library (ISBN)'
   };
 }
 
@@ -101,9 +105,9 @@ async function searchSBN(isbn) {
    ════════════════════════════════════════════ */
 
 const API_STEPS = [
-  { label: 'Google Books'  },
-  { label: 'Open Library'  },
-  { label: 'Catalogo SBN'  }
+  { label: 'Google Books'   },
+  { label: 'Open Library'   },
+  { label: 'Open Library +'  }
 ];
 
 function setSearchLoading(step) {
@@ -146,10 +150,34 @@ function setSearchLoading(step) {
 }
 
 /* ════════════════════════════════════════════
+   Auto-open new entry form with ISBN pre-filled
+   Called when all sources return no result.
+   ════════════════════════════════════════════ */
+function openNewEntryWithISBN(isbn) {
+  /* Ensure the "Crea una nuova voce" section is open */
+  if (typeof newEntryOpen !== 'undefined' && !newEntryOpen) {
+    if (typeof toggleNewEntry === 'function') toggleNewEntry();
+  }
+
+  /* Pre-fill ISBN field */
+  setTimeout(function() {
+    var isbnField = document.getElementById('ne-isbn');
+    if (isbnField) {
+      isbnField.value = isbn;
+      /* Highlight field briefly to draw attention */
+      isbnField.style.borderColor = 'var(--accent)';
+      setTimeout(function(){ isbnField.style.borderColor = ''; }, 2000);
+    }
+    /* Scroll form into view */
+    var form = document.getElementById('new-entry-form');
+    if (form) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 80); /* slight delay to allow form to render */
+}
+
+/* ════════════════════════════════════════════
    Main search entry point
    (called by both manual input and camera scan)
    ════════════════════════════════════════════ */
-
 async function searchISBN() {
   const raw = document.getElementById('isbn-input').value.trim();
   if (!raw) return showToast('Inserisci un codice ISBN');
@@ -160,14 +188,17 @@ async function searchISBN() {
 
   let result = null;
 
-  try { setSearchLoading(0); result = await searchGoogleBooks(isbn); } catch(e) {}
-  if (!result) { try { setSearchLoading(1); result = await searchOpenLibrary(isbn); } catch(e) {} }
-  if (!result) { try { setSearchLoading(2); result = await searchSBN(isbn);         } catch(e) {} }
+  try { setSearchLoading(0); result = await searchGoogleBooks(isbn);       } catch(e) {}
+  if (!result) { try { setSearchLoading(1); result = await searchOpenLibrary(isbn);    } catch(e) {} }
+  if (!result) { try { setSearchLoading(2); result = await searchOpenLibraryISBN(isbn);} catch(e) {} }
 
   setSearchLoading(null);
 
-  if (!result) return showToast('Nessun risultato trovato nelle fonti disponibili');
+  if (!result) {
+    showToast('Nessun risultato — compila tu i dettagli del libro');
+    openNewEntryWithISBN(raw);
+    return;
+  }
 
-  /* Expose result to app.js */
   onSearchResult({ ...result, isbn: raw });
 }

@@ -37,7 +37,7 @@ function renderResult(book) {
   document.getElementById('r-location-custom').value = '';
 
   var sourceEl  = document.getElementById('r-source');
-  var sourceMap = { 'Google Books':'source-google', 'Open Library':'source-openlibrary', 'SBN':'source-sbn' };
+  var sourceMap = { 'Google Books':'source-google', 'Open Library':'source-openlibrary', 'Open Library (ISBN)':'source-openlibrary' };
   if (book.source) {
     sourceEl.textContent   = book.source;
     sourceEl.className     = 'tag ' + (sourceMap[book.source] || '');
