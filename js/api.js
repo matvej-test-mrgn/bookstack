@@ -195,7 +195,7 @@ async function searchISBN() {
   setSearchLoading(null);
 
   if (!result) {
-    showToast('Nessun risultato — compila tu i dettagli del libro');
+    showToast('Nessun risultato. Inserire manualmente i dettagli del volume.');
     openNewEntryWithISBN(raw);
     return;
   }
