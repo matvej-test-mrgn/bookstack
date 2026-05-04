@@ -229,3 +229,44 @@ function addCategoryFromSettings() {
   input.value = '';
   showToast('"' + name + '" aggiunta — tocca il pallino per cambiare colore');
 }
+
+/* ════════════════════════════════════════════
+   Inline "add category" from book entry forms
+   prefix: 'ne' | 'r' | 'ed'
+   ════════════════════════════════════════════ */
+function toggleCustomCategory(prefix) {
+  var wrap = document.getElementById(prefix + '-category-custom-wrap');
+  if (!wrap) return;
+  var isOpen = wrap.style.display !== 'none';
+  wrap.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) {
+    var inp = document.getElementById(prefix + '-category-custom-name');
+    if (inp) { inp.value = ''; inp.focus(); }
+  }
+}
+
+function confirmCustomCategory(prefix) {
+  var nameInput = document.getElementById(prefix + '-category-custom-name');
+  var name = nameInput ? nameInput.value.trim() : '';
+  if (!name) return showToast('Inserisci un nome per la categoria');
+
+  if (!getCategoryByName(name)) {
+    var usedBgs = (state.categories || []).map(function(c){ return c.bg; });
+    var swatch  = PASTEL_PALETTE[0];
+    for (var i = 0; i < PASTEL_PALETTE.length; i++) {
+      if (usedBgs.indexOf(PASTEL_PALETTE[i].bg) === -1) { swatch = PASTEL_PALETTE[i]; break; }
+    }
+    state.categories.push({ id: 'cat_' + Date.now(), name: name, bg: swatch.bg, text: swatch.text });
+    saveCategories();
+  }
+
+  /* Refresh all dropdowns and select the new category in the triggering one */
+  ['ne', 'r', 'ed'].forEach(function(p) {
+    populateCategorySelect(p + '-category', p === prefix ? name : null);
+  });
+  var sel = document.getElementById(prefix + '-category');
+  if (sel) sel.value = name;
+
+  document.getElementById(prefix + '-category-custom-wrap').style.display = 'none';
+  showToast('"' + name + '" aggiunta — il colore si cambia dalle Impostazioni');
+}
