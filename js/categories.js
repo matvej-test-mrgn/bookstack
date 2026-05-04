@@ -97,14 +97,17 @@ function categoryPillHTML(book) {
    ════════════════════════════════════════════ */
 
 /* Which category index has the colour picker open (-1 = none) */
-var _openColorPickerIdx = -1;
+var _openColorPickerIdx  = -1;
+/* Which category index is being renamed (-1 = none) */
+var _renamingCategoryIdx = -1;
 
 function renderSettingsCategories() {
   var container = document.getElementById('settings-category-list');
   if (!container) return;
 
   container.innerHTML = (state.categories || []).map(function(c, i) {
-    var pickerOpen = (_openColorPickerIdx === i);
+    var pickerOpen  = (_openColorPickerIdx  === i);
+    var isRenaming  = (_renamingCategoryIdx === i);
 
     var swatchesHTML = pickerOpen
       ? '<div class="cat-color-picker">'
@@ -119,17 +122,62 @@ function renderSettingsCategories() {
         + '</div>'
       : '';
 
+    var nameHTML = isRenaming
+      ? '<input type="text" class="rename-input" id="rename-cat-' + i + '" value="' + escHtml(c.name) + '"'
+        + ' onkeydown="if(event.key===\'Enter\') confirmRenameCategory(' + i + '); if(event.key===\'Escape\') cancelRename(\'category\');"'
+        + ' />'
+        + '<button class="btn-action btn-confirm-rename" onclick="confirmRenameCategory(' + i + ')" title="Conferma">✓</button>'
+        + '<button class="btn-action btn-cancel-rename" onclick="cancelRename(\'category\')" title="Annulla">✕</button>'
+      : '<span>' + escHtml(c.name) + '</span>'
+        + '<button class="btn-action btn-edit" onclick="startRenameCategory(' + i + ')" title="Rinomina">' + EDIT_SVG + '</button>'
+        + '<button class="btn-action btn-delete" onclick="removeCategory(' + i + ')" title="Rimuovi">'
+        + '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">'
+        + '<path d="M4 4l12 12M16 4L4 16"/></svg></button>';
+
     return '<div class="category-settings-item' + (pickerOpen ? ' picker-open' : '') + '">'
       + '<button type="button" class="cat-color-btn" title="Cambia colore"'
       + '  style="background:' + c.bg + '; border-color:' + c.text + ';"'
       + '  onclick="toggleColorPicker(' + i + ')"></button>'
-      + '<span>' + escHtml(c.name) + '</span>'
-      + '<button class="btn-action btn-delete" onclick="removeCategory(' + i + ')" title="Rimuovi">'
-      + '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">'
-      + '<path d="M4 4l12 12M16 4L4 16"/></svg></button>'
+      + nameHTML
       + '</div>'
       + swatchesHTML;
   }).join('');
+
+  /* Focus rename input if active */
+  if (_renamingCategoryIdx !== -1) {
+    var inp = document.getElementById('rename-cat-' + _renamingCategoryIdx);
+    if (inp) { inp.focus(); inp.select(); }
+  }
+}
+
+function startRenameCategory(i) {
+  _openColorPickerIdx  = -1;
+  _renamingCategoryIdx = i;
+  renderSettingsCategories();
+}
+
+function confirmRenameCategory(i) {
+  var inp = document.getElementById('rename-cat-' + i);
+  if (!inp) return;
+  var newName = inp.value.trim();
+  if (!newName) return showToast('Il nome non può essere vuoto');
+  if (newName === state.categories[i].name) { _renamingCategoryIdx = -1; renderSettingsCategories(); return; }
+  if (getCategoryByName(newName)) return showToast('Categoria già esistente');
+
+  var oldName = state.categories[i].name;
+  state.categories[i].name = newName;
+  saveCategories();
+
+  /* Global rename across collection */
+  state.collection.forEach(function(b) {
+    if (b.category === oldName) b.category = newName;
+  });
+  if (typeof save === 'function') save();
+
+  _renamingCategoryIdx = -1;
+  renderSettingsCategories();
+  if (typeof renderCollection === 'function') renderCollection();
+  showToast('"' + oldName + '" → "' + newName + '"');
 }
 
 function toggleColorPicker(idx) {
@@ -149,7 +197,8 @@ function pickCategoryColor(catIdx, paletteIdx) {
 }
 
 function removeCategory(i) {
-  if (_openColorPickerIdx === i) _openColorPickerIdx = -1;
+  if (_openColorPickerIdx  === i) _openColorPickerIdx  = -1;
+  if (_renamingCategoryIdx === i) _renamingCategoryIdx = -1;
   state.categories.splice(i, 1);
   saveCategories();
   renderSettingsCategories();

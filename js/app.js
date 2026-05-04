@@ -271,12 +271,69 @@ function populateLocationSelect(selectId, currentValue) {
       }).join('');
 }
 
+/* Which location index is being renamed (-1 = none) */
+var _renamingLocationIdx = -1;
+
 function renderSettingsLocations() {
   document.getElementById('settings-location-list').innerHTML =
     state.locations.map(function(l, i) {
+      if (_renamingLocationIdx === i) {
+        return '<div class="location-item renaming">'
+          + '<div class="loc-dot"></div>'
+          + '<input type="text" class="rename-input" id="rename-loc-' + i + '" value="' + escHtml(l) + '"'
+          + ' onkeydown="if(event.key===\'Enter\') confirmRenameLocation(' + i + '); if(event.key===\'Escape\') cancelRename(\'location\');"'
+          + ' />'
+          + '<button class="btn-action btn-confirm-rename" onclick="confirmRenameLocation(' + i + ')" title="Conferma">✓</button>'
+          + '<button class="btn-action btn-cancel-rename" onclick="cancelRename(\'location\')" title="Annulla">✕</button>'
+          + '</div>';
+      }
       return '<div class="location-item"><div class="loc-dot"></div><span>' + escHtml(l) + '</span>'
+        + '<button class="btn-action btn-edit" onclick="startRenameLocation(' + i + ')" title="Rinomina">' + EDIT_SVG + '</button>'
         + '<button class="btn-action btn-delete" onclick="removeLocation(' + i + ')" title="Rimuovi">' + DELETE_SVG + '</button></div>';
     }).join('');
+
+  /* Focus the input if renaming */
+  if (_renamingLocationIdx !== -1) {
+    var inp = document.getElementById('rename-loc-' + _renamingLocationIdx);
+    if (inp) { inp.focus(); inp.select(); }
+  }
+}
+
+function startRenameLocation(i) {
+  _renamingLocationIdx = i;
+  renderSettingsLocations();
+}
+
+function confirmRenameLocation(i) {
+  var inp = document.getElementById('rename-loc-' + i);
+  if (!inp) return;
+  var newName = inp.value.trim();
+  if (!newName) return showToast('Il nome non può essere vuoto');
+  if (newName === state.locations[i]) { cancelRename('location'); return; }
+  if (state.locations.indexOf(newName) !== -1) return showToast('Luogo già esistente');
+
+  var oldName = state.locations[i];
+  state.locations[i] = newName;
+
+  /* Global rename across collection */
+  state.collection.forEach(function(b) {
+    if (b.location === oldName) b.location = newName;
+  });
+
+  _renamingLocationIdx = -1;
+  save();
+  renderSettingsLocations();
+  renderCollection();
+  showToast('"' + oldName + '" → "' + newName + '"');
+}
+
+function cancelRename(type) {
+  if (type === 'location') { _renamingLocationIdx = -1; renderSettingsLocations(); }
+  if (type === 'category') {
+    if (typeof _openColorPickerIdx !== 'undefined') _openColorPickerIdx = -1;
+    if (typeof _renamingCategoryIdx !== 'undefined') _renamingCategoryIdx = -1;
+    if (typeof renderSettingsCategories === 'function') renderSettingsCategories();
+  }
 }
 
 function addLocation() {
@@ -291,6 +348,7 @@ function addLocation() {
 }
 
 function removeLocation(i) {
+  _renamingLocationIdx = -1;
   state.locations.splice(i, 1);
   save();
   renderSettingsLocations();
@@ -511,9 +569,40 @@ function importCatalog(event) {
           author:get('author')||'—', publisher:get('publisher')||'—', year:get('year')||'—',
           source:get('source')||'', location:get('location')||'Non specificato',
           status:get('status')||'Da leggere', notes:get('notes')||'',
-          dateAdded:get('dateAdded')||new Date().toLocaleDateString('it-IT'), coverUrl:get('coverUrl')||null });
+          dateAdded:get('dateAdded')||new Date().toLocaleDateString('it-IT'), coverUrl:get('coverUrl')||null,
+          category:get('category')||'', tags:get('tags')||'' });
       });
       if (imported.length===0) return show('Nessun record valido trovato.','error');
+
+      /* ── Sync locations from CSV ── */
+      imported.forEach(function(b) {
+        if (b.location && b.location !== 'Non specificato' && state.locations.indexOf(b.location) === -1) {
+          state.locations.push(b.location);
+        }
+      });
+
+      /* ── Sync categories from CSV ── */
+      if (typeof state.categories !== 'undefined') {
+        imported.forEach(function(b) {
+          if (!b.category) return;
+          var exists = state.categories.some(function(c){ return c.name === b.category; });
+          if (!exists) {
+            /* Assign a palette colour not already in use */
+            var usedBgs = state.categories.map(function(c){ return c.bg; });
+            var swatch  = PASTEL_PALETTE[0];
+            if (typeof PASTEL_PALETTE !== 'undefined') {
+              for (var pi = 0; pi < PASTEL_PALETTE.length; pi++) {
+                if (usedBgs.indexOf(PASTEL_PALETTE[pi].bg) === -1) { swatch = PASTEL_PALETTE[pi]; break; }
+              }
+            }
+            state.categories.push({ id:'cat_'+Date.now()+'_'+Math.random().toString(36).slice(2),
+              name:b.category, bg:swatch.bg, text:swatch.text });
+          }
+        });
+        if (typeof saveCategories === 'function') saveCategories();
+        if (typeof renderSettingsCategories === 'function') renderSettingsCategories();
+      }
+
       var existing={};
       state.collection.forEach(function(b){ existing[b.isbn]=true; });
       var newBooks   = imported.filter(function(b){ return !existing[b.isbn]; });
