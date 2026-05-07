@@ -625,7 +625,7 @@ function importCatalog(event) {
 /* ════════════════════════════════════════════
    Google Drive export
    ════════════════════════════════════════════ */
-var GOOGLE_CLIENT_ID = '';
+var GOOGLE_CLIENT_ID = '352776428431-2l9bk0gjtbdkof13q1dai7pro92749as.apps.googleusercontent.com';
 var DRIVE_SCOPE      = 'https://www.googleapis.com/auth/drive.file';
 var driveToken       = null;
 
