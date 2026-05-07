@@ -575,6 +575,18 @@ textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
   background: #E8F0FE;
 }
 
+.stats-link {
+  font-size: 0.8125rem;
+  color: var(--accent);
+  cursor: pointer;
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 2px;
+  transition: text-decoration-color 0.15s;
+}
+.stats-link:hover { text-decoration-color: var(--accent); }
+
 .delete-all-link {
   font-size: 0.8125rem;
   color: var(--text-3);

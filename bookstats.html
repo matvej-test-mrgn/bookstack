@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BookStats — BookStack</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           #F7F5F0;
+      --surface:      #FFFFFF;
+      --surface-2:    #F0EDE7;
+      --text-1:       #1A1A18;
+      --text-2:       #6B6860;
+      --text-3:       #A09D98;
+      --accent:       #2A7A6F;
+      --accent-light: #E4F2F0;
+      --accent-dark:  #1F5C54;
+      --border:       #E3E0DA;
+      --border-2:     #CCC9C2;
+      --radius:       12px;
+      --radius-sm:    8px;
+      --font-brand:   'Lora', Georgia, serif;
+      --font-ui:      'Outfit', system-ui, sans-serif;
+      --shadow:       0 1px 3px rgba(0,0,0,.06), 0 4px 12px rgba(0,0,0,.04);
+    }
+
+    html { font-size: 16px; }
+    body {
+      font-family: var(--font-ui);
+      background: var(--bg);
+      color: var(--text-1);
+      min-height: 100vh;
+      padding-bottom: 4rem;
+    }
+
+    /* ── Header ── */
+    .page-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .back-btn {
+      display: flex; align-items: center; gap: 0.375rem;
+      font-family: var(--font-ui); font-size: 0.875rem;
+      color: var(--text-2); text-decoration: none;
+      padding: 0.4rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg);
+      transition: border-color 0.15s, color 0.15s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .back-btn:hover { border-color: var(--border-2); color: var(--text-1); }
+    .back-btn svg { flex-shrink: 0; }
+
+    .header-title {
+      font-family: var(--font-brand);
+      font-size: 1.375rem;
+      font-weight: 600;
+      color: var(--text-1);
+      letter-spacing: -0.01em;
+      flex: 1;
+    }
+    .header-title span { color: var(--accent); font-style: italic; }
+
+    .header-meta {
+      font-size: 0.8125rem;
+      color: var(--text-3);
+      font-weight: 400;
+      white-space: nowrap;
+    }
+
+    /* ── Layout ── */
+    .main { max-width: 700px; margin: 0 auto; padding: 1.25rem 1rem; }
+
+    /* ── Section headers ── */
+    .section-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 0.875rem;
+      margin-top: 2rem;
+    }
+    .section-label:first-child { margin-top: 0; }
+
+    /* ── Stat cards ── */
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      margin-bottom: 0.75rem;
+      box-shadow: var(--shadow);
+      animation: fadeUp 0.4s ease both;
+    }
+    .stat-card-title {
+      font-family: var(--font-brand);
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-1);
+      margin-bottom: 1.25rem;
+    }
+
+    .charts-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+    @media (max-width: 480px) { .charts-row { grid-template-columns: 1fr; } }
+
+    /* ── Pie chart + legend ── */
+    .pie-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+    .pie-canvas-wrap {
+      position: relative;
+      width: 160px; height: 160px;
+    }
+    .pie-canvas-wrap canvas { width: 160px !important; height: 160px !important; }
+    .pie-center-label {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      pointer-events: none;
+    }
+    .pie-center-n    { font-size: 1.5rem; font-weight: 600; color: var(--text-1); line-height: 1; }
+    .pie-center-text { font-size: 0.625rem; color: var(--text-3); font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; margin-top: 2px; }
+
+    .pie-legend {
+      width: 100%;
+      display: flex; flex-direction: column; gap: 0.375rem;
+    }
+    .legend-row {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.8125rem; color: var(--text-2);
+    }
+    .legend-dot {
+      width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+    }
+    .legend-label { flex: 1; }
+    .legend-pct    { font-weight: 500; color: var(--text-1); font-size: 0.8125rem; }
+    .legend-count  { color: var(--text-3); font-size: 0.75rem; margin-left: 2px; }
+
+    /* ── Bar chart ── */
+    .bar-wrap { position: relative; height: 220px; }
+
+    /* ── Word cloud ── */
+    .wordcloud-canvas-wrap {
+      width: 100%;
+      min-height: 200px;
+      position: relative;
+    }
+    .wordcloud-canvas-wrap canvas {
+      display: block;
+      width: 100% !important;
+    }
+    .empty-note {
+      color: var(--text-3);
+      font-size: 0.875rem;
+      font-style: italic;
+      padding: 2rem 0;
+      text-align: center;
+    }
+
+    /* ── Consigli di lettura ── */
+    .suggest-card {
+      background: var(--accent);
+      border-radius: var(--radius);
+      padding: 1.5rem 1.25rem;
+      margin-bottom: 0.75rem;
+      color: #fff;
+      animation: fadeUp 0.4s 0.3s ease both;
+    }
+    .suggest-card .stat-card-title {
+      color: #fff;
+      margin-bottom: 0.25rem;
+    }
+    .suggest-subtitle {
+      font-size: 0.8125rem;
+      color: rgba(255,255,255,0.7);
+      margin-bottom: 1.25rem;
+    }
+
+    .filters-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    @media (max-width: 400px) { .filters-row { grid-template-columns: 1fr; } }
+
+    .suggest-select {
+      width: 100%;
+      padding: 0.5rem 0.625rem;
+      font-family: var(--font-ui); font-size: 0.8125rem;
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: var(--radius-sm);
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+      appearance: none;
+      cursor: pointer;
+      outline: none;
+      transition: background 0.15s;
+    }
+    .suggest-select:focus { background: rgba(255,255,255,0.22); }
+    .suggest-select option { color: var(--text-1); background: var(--surface); }
+
+    .btn-pick {
+      width: 100%;
+      padding: 0.875rem;
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.35);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-ui); font-size: 1rem; font-weight: 500;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+      transition: background 0.15s, transform 0.12s;
+    }
+    .btn-pick:hover { background: rgba(255,255,255,0.28); }
+    .btn-pick:active { transform: scale(0.98); }
+
+    /* ── Picked book result card ── */
+    .picked-wrap {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      margin-top: 0.75rem;
+      border: 1px solid var(--border);
+      display: none;
+      animation: fadeUp 0.3s ease both;
+    }
+    .picked-wrap.visible { display: flex; gap: 1rem; }
+
+    .picked-cover {
+      width: 64px; height: 90px; flex-shrink: 0;
+      border-radius: 4px; overflow: hidden;
+      background: var(--surface-2);
+    }
+    .picked-cover img {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    .picked-spine {
+      width: 64px; height: 90px;
+      border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+      padding: 6px;
+    }
+    .picked-spine-text {
+      writing-mode: vertical-rl; transform: rotate(180deg);
+      font-family: var(--font-brand); font-size: 0.625rem; font-weight: 600;
+      color: inherit; text-align: center;
+      overflow: hidden;
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+    }
+    .picked-info { flex: 1; min-width: 0; }
+    .picked-title {
+      font-family: var(--font-brand); font-size: 1rem; font-weight: 600;
+      color: var(--text-1); margin-bottom: 0.2rem;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .picked-author { font-size: 0.875rem; color: var(--text-2); margin-bottom: 0.5rem; }
+    .picked-pills { display: flex; flex-wrap: wrap; gap: 0.375rem; }
+    .picked-pill {
+      font-size: 0.6875rem; font-weight: 500;
+      padding: 2px 7px; border-radius: 10px;
+      border: 1px solid transparent;
+    }
+    .status-pill-letto      { background: #E4F2F0; color: #2A7A6F; border-color: #2A7A6F30; }
+    .status-pill-inlettura  { background: #E3EEF8; color: #1A5C8A; border-color: #1A5C8A30; }
+    .status-pill-daleggere  { background: #F8F0E3; color: #7A5C1A; border-color: #7A5C1A30; }
+    .status-pill-sospeso    { background: #F0EDEA; color: #6B6860; border-color: #6B686030; }
+    .location-pill { background: var(--bg); color: var(--text-2); border-color: var(--border); }
+
+    .no-result-note {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 1rem;
+      margin-top: 0.75rem;
+      border: 1px solid var(--border);
+      color: var(--text-2); font-size: 0.875rem;
+      font-style: italic; text-align: center;
+    }
+
+    /* ── Animations ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .stat-card:nth-child(1) { animation-delay: 0.05s; }
+    .stat-card:nth-child(2) { animation-delay: 0.1s;  }
+    .stat-card:nth-child(3) { animation-delay: 0.15s; }
+    .stat-card:nth-child(4) { animation-delay: 0.2s;  }
+    .stat-card:nth-child(5) { animation-delay: 0.25s; }
+    .stat-card:nth-child(6) { animation-delay: 0.3s;  }
+  </style>
+</head>
+<body>
+
+<header class="page-header">
+  <a href="index.html" class="back-btn">
+    <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4L7 10l6 6"/></svg>
+    Libreria
+  </a>
+  <div class="header-title">Book<span>Stats</span></div>
+  <div class="header-meta" id="header-meta"></div>
+</header>
+
+<main class="main">
+
+  <p class="section-label">Stato di lettura &amp; Collocazione</p>
+  <div class="charts-row">
+    <div class="stat-card">
+      <div class="stat-card-title">Stato di lettura</div>
+      <div class="pie-wrap">
+        <div class="pie-canvas-wrap">
+          <canvas id="chart-status"></canvas>
+          <div class="pie-center-label">
+            <span class="pie-center-n" id="status-center-n"></span>
+            <span class="pie-center-text">libri</span>
+          </div>
+        </div>
+        <div class="pie-legend" id="legend-status"></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-title">Collocazione</div>
+      <div class="pie-wrap">
+        <div class="pie-canvas-wrap">
+          <canvas id="chart-location"></canvas>
+          <div class="pie-center-label">
+            <span class="pie-center-n" id="location-center-n"></span>
+            <span class="pie-center-text">luoghi</span>
+          </div>
+        </div>
+        <div class="pie-legend" id="legend-location"></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="section-label">Categorie</p>
+  <div class="stat-card">
+    <div class="stat-card-title">Distribuzione per categoria</div>
+    <div class="bar-wrap"><canvas id="chart-cat-bar"></canvas></div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-card-title">Ripartizione categorie</div>
+    <div class="pie-wrap">
+      <div class="pie-canvas-wrap">
+        <canvas id="chart-cat-pie"></canvas>
+        <div class="pie-center-label">
+          <span class="pie-center-n" id="catpie-center-n"></span>
+          <span class="pie-center-text">categ.</span>
+        </div>
+      </div>
+      <div class="pie-legend" id="legend-cat-pie"></div>
+    </div>
+  </div>
+
+  <p class="section-label">Tag</p>
+  <div class="stat-card">
+    <div class="stat-card-title">Tag più presenti</div>
+    <div class="wordcloud-canvas-wrap" id="wordcloud-wrap"></div>
+  </div>
+
+  <p class="section-label">Consigli di lettura</p>
+  <div class="suggest-card">
+    <div class="stat-card-title">Pesca un libro</div>
+    <p class="suggest-subtitle">Filtra la collezione e lascia decidere al caso.</p>
+
+    <div class="filters-row">
+      <select class="suggest-select" id="sg-status">
+        <option value="">Qualsiasi stato</option>
+        <option>Letto</option>
+        <option>In lettura</option>
+        <option>Da leggere</option>
+        <option>Sospeso</option>
+      </select>
+      <select class="suggest-select" id="sg-category">
+        <option value="">Qualsiasi categoria</option>
+      </select>
+      <select class="suggest-select" id="sg-location">
+        <option value="">Qualsiasi luogo</option>
+      </select>
+    </div>
+
+    <button class="btn-pick" onclick="pickBook()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2 16s1-1 4-1 5 2 8 2 4-1 4-1V4s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+        <line x1="2" y1="20" x2="2" y2="16"/>
+      </svg>
+      Pesca un libro
+    </button>
+  </div>
+
+  <div id="picked-result"></div>
+
+</main>
+
+<script>
+/* ════════════════════════════════════════════
+   BookStats — data loading
+   ════════════════════════════════════════════ */
+
+var collection = [];
+var categories = [];
+
+try {
+  var raw = localStorage.getItem('bookstack_collection');
+  collection = raw ? JSON.parse(raw) : [];
+} catch(e) { collection = []; }
+
+try {
+  var rawCats = localStorage.getItem('bookstack_categories');
+  categories = rawCats ? JSON.parse(rawCats) : [];
+} catch(e) { categories = []; }
+
+document.getElementById('header-meta').textContent =
+  collection.length + (collection.length === 1 ? ' libro' : ' libri');
+
+/* ── Color palette ── */
+var CHART_COLORS = [
+  '#2A7A6F','#5B4A8A','#1A5C8A','#8A4A2E',
+  '#7A6020','#8A2E5B','#2E5E42','#6B5A3A',
+  '#6A2E8A','#1A6878','#3D9B8E','#9B703D'
+];
+
+var STATUS_COLORS = {
+  'Letto':      '#2A7A6F',
+  'In lettura': '#1A5C8A',
+  'Da leggere': '#C17F3A',
+  'Sospeso':    '#A09D98'
+};
+
+function hexToRgba(hex, alpha) {
+  var r = parseInt(hex.slice(1,3),16);
+  var g = parseInt(hex.slice(3,5),16);
+  var b = parseInt(hex.slice(5,7),16);
+  return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+}
+
+function getCategoryColor(name) {
+  for (var i = 0; i < categories.length; i++) {
+    if (categories[i].name === name) return categories[i].text || CHART_COLORS[i % CHART_COLORS.length];
+  }
+  return CHART_COLORS[0];
+}
+
+/* ── Frequency map helper ── */
+function freqMap(arr) {
+  var m = {};
+  arr.forEach(function(v) { m[v] = (m[v] || 0) + 1; });
+  return m;
+}
+
+/* ════════════════════════════════════════════
+   Donut chart factory
+   ════════════════════════════════════════════ */
+function buildDonut(canvasId, labels, values, colors, centerElId, legendId, labelSuffix) {
+  var total = values.reduce(function(a,b){ return a+b; }, 0);
+  if (centerElId) document.getElementById(centerElId).textContent =
+    (labelSuffix === 'categ.') ? labels.length : total;
+
+  /* Legend */
+  if (legendId) {
+    document.getElementById(legendId).innerHTML = labels.map(function(l, i) {
+      var pct = total ? Math.round(values[i] / total * 100) : 0;
+      return '<div class="legend-row">'
+        + '<div class="legend-dot" style="background:' + colors[i] + ';"></div>'
+        + '<span class="legend-label">' + l + '</span>'
+        + '<span class="legend-pct">' + pct + '%</span>'
+        + '<span class="legend-count">(' + values[i] + ')</span>'
+        + '</div>';
+    }).join('');
+  }
+
+  new Chart(document.getElementById(canvasId), {
+    type: 'doughnut',
+    data: {
+      labels: labels,
+      datasets: [{ data: values, backgroundColor: colors, borderWidth: 2, borderColor: '#FFFFFF', hoverOffset: 6 }]
+    },
+    options: {
+      responsive: false,
+      cutout: '62%',
+      animation: { animateRotate: true, duration: 800, easing: 'easeInOutQuart' },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              var pct = total ? Math.round(ctx.parsed / total * 100) : 0;
+              return ' ' + ctx.label + ': ' + ctx.parsed + ' (' + pct + '%)';
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+/* ════════════════════════════════════════════
+   1 — Status donut
+   ════════════════════════════════════════════ */
+(function() {
+  var freq = freqMap(collection.map(function(b){ return b.status || 'Da leggere'; }));
+  var order = ['Letto','In lettura','Da leggere','Sospeso'];
+  var labels = [], values = [], colors = [];
+  order.forEach(function(s) {
+    if (freq[s]) { labels.push(s); values.push(freq[s]); colors.push(STATUS_COLORS[s]); }
+  });
+  Object.keys(freq).forEach(function(s) {
+    if (order.indexOf(s) === -1) { labels.push(s); values.push(freq[s]); colors.push('#A09D98'); }
+  });
+  buildDonut('chart-status', labels, values, colors, 'status-center-n', 'legend-status', 'libri');
+})();
+
+/* ════════════════════════════════════════════
+   2 — Location donut
+   ════════════════════════════════════════════ */
+(function() {
+  var freq = freqMap(collection.map(function(b){ return b.location || 'Non specificato'; }));
+  var entries = Object.entries(freq).sort(function(a,b){ return b[1]-a[1]; });
+  var labels = entries.map(function(e){ return e[0]; });
+  var values = entries.map(function(e){ return e[1]; });
+  var colors = labels.map(function(_,i){ return CHART_COLORS[i % CHART_COLORS.length]; });
+  document.getElementById('location-center-n').textContent = labels.length;
+  buildDonut('chart-location', labels, values, colors, null, 'legend-location', 'luoghi');
+})();
+
+/* ════════════════════════════════════════════
+   3 — Category bar chart
+   ════════════════════════════════════════════ */
+(function() {
+  var freq = freqMap(
+    collection.filter(function(b){ return b.category; })
+              .map(function(b){ return b.category; })
+  );
+  var entries = Object.entries(freq).sort(function(a,b){ return b[1]-a[1]; });
+  if (!entries.length) {
+    document.querySelector('.bar-wrap').innerHTML = '<p class="empty-note" style="line-height:220px">Nessuna categoria assegnata</p>';
+    return;
+  }
+  var labels = entries.map(function(e){ return e[0]; });
+  var values = entries.map(function(e){ return e[1]; });
+  var bgColors = labels.map(function(l){ return hexToRgba(getCategoryColor(l), 0.22); });
+  var bdColors = labels.map(function(l){ return getCategoryColor(l); });
+
+  new Chart(document.getElementById('chart-cat-bar'), {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        data: values,
+        backgroundColor: bgColors,
+        borderColor: bdColors,
+        borderWidth: 1.5,
+        borderRadius: 6,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 900, easing: 'easeInOutQuart' },
+      plugins: { legend: { display: false }, tooltip: {
+        callbacks: { label: function(ctx){ return ' ' + ctx.parsed.y + (ctx.parsed.y === 1 ? ' libro' : ' libri'); }}
+      }},
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { family: "'Outfit', sans-serif", size: 11 }, color: '#6B6860' }},
+        y: { grid: { color: '#E3E0DA' }, ticks: { font: { family: "'Outfit', sans-serif", size: 11 }, color: '#A09D98', stepSize: 1 }, beginAtZero: true }
+      }
+    }
+  });
+})();
+
+/* ════════════════════════════════════════════
+   4 — Category donut
+   ════════════════════════════════════════════ */
+(function() {
+  var freq = freqMap(
+    collection.filter(function(b){ return b.category; })
+              .map(function(b){ return b.category; })
+  );
+  var entries = Object.entries(freq).sort(function(a,b){ return b[1]-a[1]; });
+  if (!entries.length) {
+    document.getElementById('chart-cat-pie').parentElement.innerHTML =
+      '<p class="empty-note">Nessuna categoria assegnata</p>';
+    return;
+  }
+  var labels = entries.map(function(e){ return e[0]; });
+  var values = entries.map(function(e){ return e[1]; });
+  var colors = labels.map(function(l){ return getCategoryColor(l); });
+  buildDonut('chart-cat-pie', labels, values, colors, 'catpie-center-n', 'legend-cat-pie', 'categ.');
+})();
+
+/* ════════════════════════════════════════════
+   5 — Word cloud (canvas)
+   ════════════════════════════════════════════ */
+(function() {
+  var freq = {};
+  collection.forEach(function(b) {
+    if (!b.tags) return;
+    String(b.tags).split(',').map(function(t){ return t.trim(); }).filter(Boolean).forEach(function(t) {
+      freq[t.toLowerCase()] = (freq[t.toLowerCase()] || 0) + 1;
+    });
+  });
+
+  var entries = Object.entries(freq).sort(function(a,b){ return b[1]-a[1]; }).slice(0, 40);
+  var wrap    = document.getElementById('wordcloud-wrap');
+
+  if (!entries.length) {
+    wrap.innerHTML = '<p class="empty-note">Nessun tag presente</p>';
+    return;
+  }
+
+  /* Build canvas after layout is settled */
+  requestAnimationFrame(function() {
+    var W   = wrap.clientWidth || 400;
+    var H   = Math.max(220, Math.min(300, W * 0.6));
+    var DPR = window.devicePixelRatio || 1;
+
+    var canvas       = document.createElement('canvas');
+    canvas.width     = W * DPR;
+    canvas.height    = H * DPR;
+    canvas.style.width  = W + 'px';
+    canvas.style.height = H + 'px';
+    wrap.appendChild(canvas);
+
+    var ctx = canvas.getContext('2d');
+    ctx.scale(DPR, DPR);
+
+    var maxFreq = entries[0][1];
+    var COLORS  = ['#5B4A8A','#2E7D52','#1A5C8A','#8A4A2E','#7A6020','#8A2E5B','#2E5E42','#6B5A3A','#6A2E8A','#1A6878'];
+
+    /* Coarse collision grid (8 px cells) */
+    var CELL = 8;
+    var GW   = Math.ceil(W / CELL);
+    var GH   = Math.ceil(H / CELL);
+    var grid = new Uint8Array(GW * GH);
+
+    function mark(x, y, w, h) {
+      var x1 = Math.max(0, Math.floor(x / CELL));
+      var y1 = Math.max(0, Math.floor(y / CELL));
+      var x2 = Math.min(GW - 1, Math.ceil((x + w) / CELL));
+      var y2 = Math.min(GH - 1, Math.ceil((y + h) / CELL));
+      for (var gy = y1; gy <= y2; gy++)
+        for (var gx = x1; gx <= x2; gx++)
+          grid[gy * GW + gx] = 1;
+    }
+
+    function fits(x, y, w, h) {
+      if (x < 4 || y < 4 || x + w > W - 4 || y + h > H - 4) return false;
+      var x1 = Math.floor(x / CELL);
+      var y1 = Math.floor(y / CELL);
+      var x2 = Math.ceil((x + w) / CELL);
+      var y2 = Math.ceil((y + h) / CELL);
+      for (var gy = y1; gy < y2; gy++)
+        for (var gx = x1; gx < x2; gx++)
+          if (grid[gy * GW + gx]) return false;
+      return true;
+    }
+
+    entries.forEach(function(entry, idx) {
+      var word   = entry[0];
+      var freq   = entry[1];
+      var t      = freq / maxFreq;
+      var size   = Math.round(11 + t * 27);
+      var weight = t > 0.55 ? '600' : '400';
+
+      ctx.font = weight + ' ' + size + 'px \'Outfit\', sans-serif';
+      var tw = ctx.measureText(word).width + 6;
+      var th = size * 1.35;
+
+      /* Archimedean spiral from center */
+      var placed = false;
+      for (var step = 0; step < 600 && !placed; step++) {
+        var angle  = step * 0.35;
+        var radius = step * 0.55;
+        var px     = W / 2 + radius * Math.cos(angle) - tw / 2;
+        var py     = H / 2 + radius * Math.sin(angle) - th / 2;
+
+        if (fits(px, py, tw, th)) {
+          mark(px, py, tw, th);
+          ctx.fillStyle = COLORS[idx % COLORS.length];
+          ctx.fillText(word, px + 3, py + size);
+          placed = true;
+        }
+      }
+    });
+  });
+})();
+
+/* ════════════════════════════════════════════
+   Consigli di lettura — populate selects
+   ════════════════════════════════════════════ */
+(function() {
+  var catSel = document.getElementById('sg-category');
+  var locSel = document.getElementById('sg-location');
+
+  /* Categories used in collection */
+  var usedCats = [];
+  collection.forEach(function(b) {
+    if (b.category && usedCats.indexOf(b.category) === -1) usedCats.push(b.category);
+  });
+  usedCats.sort().forEach(function(c) {
+    var opt = document.createElement('option'); opt.value = c; opt.textContent = c;
+    catSel.appendChild(opt);
+  });
+
+  /* Locations used in collection */
+  var usedLocs = [];
+  collection.forEach(function(b) {
+    if (b.location && usedLocs.indexOf(b.location) === -1) usedLocs.push(b.location);
+  });
+  usedLocs.sort().forEach(function(l) {
+    var opt = document.createElement('option'); opt.value = l; opt.textContent = l;
+    locSel.appendChild(opt);
+  });
+})();
+
+/* ── Random book picker ── */
+function pickBook() {
+  var statusF   = document.getElementById('sg-status').value;
+  var categoryF = document.getElementById('sg-category').value;
+  var locationF = document.getElementById('sg-location').value;
+
+  var pool = collection.filter(function(b) {
+    if (statusF   && (b.status   || 'Da leggere') !== statusF)   return false;
+    if (categoryF && (b.category || '')            !== categoryF) return false;
+    if (locationF && (b.location || '')            !== locationF) return false;
+    return true;
+  });
+
+  var resultEl = document.getElementById('picked-result');
+
+  if (!pool.length) {
+    resultEl.innerHTML = '<div class="no-result-note">Nessun libro corrisponde ai filtri selezionati.</div>';
+    return;
+  }
+
+  var book = pool[Math.floor(Math.random() * pool.length)];
+
+  /* Category color */
+  var catBg = '#F0EDE7', catText = '#6B6860';
+  for (var i = 0; i < categories.length; i++) {
+    if (categories[i].name === book.category) {
+      catBg   = categories[i].bg;
+      catText = categories[i].text;
+      break;
+    }
+  }
+
+  /* Status class */
+  var statusClass = {
+    'Letto':      'status-pill-letto',
+    'In lettura': 'status-pill-inlettura',
+    'Da leggere': 'status-pill-daleggere',
+    'Sospeso':    'status-pill-sospeso'
+  }[book.status] || 'status-pill-daleggere';
+
+  /* Cover or spine */
+  var coverHTML;
+  if (book.coverUrl) {
+    coverHTML = '<div class="picked-cover"><img src="' + book.coverUrl + '" alt="" loading="lazy"'
+      + ' onerror="this.parentElement.outerHTML=spineHTML(\'' + encodeURIComponent(book.title) + '\',\'' + catBg + '\',\'' + catText + '\')"></div>';
+  } else {
+    coverHTML = '<div class="picked-spine" style="background:' + catBg + '; color:' + catText + ';">'
+      + '<span class="picked-spine-text">' + escHtml(book.title) + '</span></div>';
+  }
+
+  resultEl.innerHTML = '<div class="picked-wrap visible">'
+    + coverHTML
+    + '<div class="picked-info">'
+    + '<div class="picked-title">' + escHtml(book.title)  + '</div>'
+    + '<div class="picked-author">' + escHtml(book.author) + (book.year && book.year !== '—' ? ' · ' + book.year : '') + '</div>'
+    + '<div class="picked-pills">'
+    + '<span class="picked-pill ' + statusClass + '">' + escHtml(book.status || 'Da leggere') + '</span>'
+    + (book.category ? '<span class="picked-pill" style="background:' + catBg + ';color:' + catText + ';border-color:' + catText + '20;">' + escHtml(book.category) + '</span>' : '')
+    + (book.location ? '<span class="picked-pill location-pill">' + escHtml(book.location) + '</span>' : '')
+    + '</div>'
+    + '</div></div>';
+}
+
+function escHtml(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function spineHTML(encodedTitle, bg, col) {
+  var title = decodeURIComponent(encodedTitle);
+  return '<div class="picked-spine" style="background:' + bg + '; color:' + col + ';">'
+    + '<span class="picked-spine-text">' + escHtml(title) + '</span></div>';
+}
+</script>
+</body>
+</html>

@@ -148,6 +148,9 @@ function renderCollection() {
   var list       = document.getElementById('collection-list');
   var pagination = document.getElementById('pagination');
 
+  var statsLink = document.getElementById('stats-link');
+  if (statsLink) statsLink.style.display = state.collection.length > 0 ? 'inline' : 'none';
+
   document.getElementById('collection-count').textContent = state.collection.length;
 
   /* Delegate filtering/sorting to search.js if loaded */
@@ -622,7 +625,7 @@ function importCatalog(event) {
 /* ════════════════════════════════════════════
    Google Drive export
    ════════════════════════════════════════════ */
-var GOOGLE_CLIENT_ID = '352776428431-2l9bk0gjtbdkof13q1dai7pro92749as.apps.googleusercontent.com';
+var GOOGLE_CLIENT_ID = '';
 var DRIVE_SCOPE      = 'https://www.googleapis.com/auth/drive.file';
 var driveToken       = null;
 
